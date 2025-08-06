@@ -230,7 +230,8 @@ export function calculateDiscountFromOptions(
       theoreticalPutPrice,
       impliedVolatility: impliedVolatility * 100,
       weight: option.liquidityScore,
-      atmDistance: option.atmDistance
+      atmDistance: option.atmDistance,
+      expiry: option.expiry
     };
   });
   

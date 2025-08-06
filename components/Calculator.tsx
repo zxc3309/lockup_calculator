@@ -475,6 +475,7 @@ export default function Calculator() {
                       <thead>
                         <tr className="border-b border-blue-100">
                           <th className="text-left pb-1">執行價</th>
+                          <th className="text-left pb-1">到期日</th>
                           <th className="text-right pb-1">距離</th>
                           <th className="text-right pb-1">Call折扣</th>
                           <th className="text-right pb-1">Put折扣</th>
@@ -485,6 +486,7 @@ export default function Calculator() {
                         {calculation.atmCalculations.map((calc, index) => (
                           <tr key={index} className="border-b border-blue-50">
                             <td className="py-1">${calc.strike.toLocaleString()}</td>
+                            <td className="py-1">{calc.expiry}</td>
                             <td className="text-right py-1">${calc.atmDistance.toFixed(0)}</td>
                             <td className="text-right py-1 text-red-600">{calc.callDiscount.toFixed(2)}%</td>
                             <td className="text-right py-1 text-green-600">{calc.putDiscount.toFixed(2)}%</td>

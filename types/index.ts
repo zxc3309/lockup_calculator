@@ -16,6 +16,7 @@ export interface ATMCalculation {
   impliedVolatility: number;
   weight: number;
   atmDistance: number;
+  expiry: string;  // 到期日 (e.g., "26DEC25")
 }
 
 export interface DiscountCalculation {
