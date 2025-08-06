@@ -1,4 +1,4 @@
-import { Token, OptionData, LockupPeriod } from '@/types';
+import { Token, OptionData, LockupPeriod, DualExpiryData, ExtrapolationStrategy } from '@/types';
 
 const DERIBIT_API = 'https://www.deribit.com/api/v2';
 const CLIENT_ID = 'E34lksyJ';
@@ -253,6 +253,68 @@ function parseExpiryDate(expiry: string): Date | null {
 // 價格選擇類型
 export type PriceType = 'mark' | 'mid' | 'last';
 
+// 智能雙到期日選擇函數
+function findOptimalExpiryPair(
+  expiryDates: Map<string, Date>, 
+  targetDate: Date
+): {
+  shortExpiry: string;
+  longExpiry: string;
+  strategy: ExtrapolationStrategy;
+} | null {
+  const sortedExpiries = Array.from(expiryDates.entries())
+    .sort(([, dateA], [, dateB]) => dateA.getTime() - dateB.getTime());
+    
+  if (sortedExpiries.length < 2) {
+    console.warn('需要至少2個到期日進行雙到期日計算');
+    return null;
+  }
+  
+  console.log(`Target date: ${targetDate.toDateString()}`);
+  console.log(`Available expiry dates: ${sortedExpiries.map(([exp, date]) => `${exp}(${date.toDateString()})`).join(', ')}`);
+  
+  // 情況1：目標日期在某兩個到期日之間（內插）
+  for (let i = 0; i < sortedExpiries.length - 1; i++) {
+    const [shortExp, shortDate] = sortedExpiries[i];
+    const [longExp, longDate] = sortedExpiries[i + 1];
+    
+    if (targetDate >= shortDate && targetDate <= longDate) {
+      console.log(`Strategy: INTERPOLATION between ${shortExp} and ${longExp}`);
+      return {
+        shortExpiry: shortExp,
+        longExpiry: longExp,
+        strategy: ExtrapolationStrategy.INTERPOLATION
+      };
+    }
+  }
+  
+  // 情況2：目標日期超出所有可用期限（外推）
+  const lastTwoExpiries = sortedExpiries.slice(-2);
+  const [shortExp, shortDate] = lastTwoExpiries[0];
+  const [longExp, longDate] = lastTwoExpiries[1];
+  
+  if (targetDate > longDate) {
+    console.log(`Strategy: EXTRAPOLATION using ${shortExp} and ${longExp} (target beyond all available)`);
+    return {
+      shortExpiry: shortExp,
+      longExpiry: longExp,
+      strategy: ExtrapolationStrategy.EXTRAPOLATION
+    };
+  }
+  
+  // 情況3：目標日期短於最短期限（使用前兩個期限）
+  const firstTwoExpiries = sortedExpiries.slice(0, 2);
+  const [shortExp2, shortDate2] = firstTwoExpiries[0];
+  const [longExp2, longDate2] = firstTwoExpiries[1];
+  
+  console.log(`Strategy: BOUNDED_EXTRAPOLATION using ${shortExp2} and ${longExp2} (target before shortest)`);
+  return {
+    shortExpiry: shortExp2,
+    longExpiry: longExp2,
+    strategy: ExtrapolationStrategy.BOUNDED_EXTRAPOLATION
+  };
+}
+
 // 獲取選擇權鏈數據
 export async function fetchOptionsChain(
   token: Token, 
@@ -476,4 +538,224 @@ export async function fetchOptionsChain(
     console.error('Error fetching options chain:', error);
     return [];
   }
+}
+
+// 新的雙到期日選擇權數據獲取函數
+export async function fetchDualExpiryOptionsData(
+  token: Token,
+  period: LockupPeriod,
+  spotPrice: number,
+  priceType: PriceType = 'mark'
+): Promise<DualExpiryData | null> {
+  try {
+    // 獲取所有可用合約
+    const instruments = await fetchAvailableInstruments(token);
+    console.log(`Total instruments available: ${instruments.length}`);
+    
+    // 計算目標到期日
+    const now = new Date();
+    const targetDate = new Date(now);
+    
+    switch (period) {
+      case '3M':
+        targetDate.setMonth(now.getMonth() + 3);
+        break;
+      case '6M':
+        targetDate.setMonth(now.getMonth() + 6);
+        break;
+      case '1Y':
+        targetDate.setFullYear(now.getFullYear() + 1);
+        break;
+      case '2Y':
+        targetDate.setFullYear(now.getFullYear() + 2);
+        break;
+    }
+    
+    // 分析所有合約並建立到期日映射
+    const instrumentsByExpiry = new Map<string, string[]>();
+    const expiryDates = new Map<string, Date>();
+    
+    for (const name of instruments) {
+      const parsed = parseInstrumentName(name);
+      if (!parsed) continue;
+      
+      // 只取strike價格在現價附近的合約 (±50%)
+      const strikeDiff = Math.abs(parsed.strike - spotPrice) / spotPrice;
+      if (strikeDiff > 0.5) continue;
+      
+      if (!instrumentsByExpiry.has(parsed.expiry)) {
+        instrumentsByExpiry.set(parsed.expiry, []);
+        const expiryDate = parseExpiryDate(parsed.expiry);
+        if (expiryDate) {
+          expiryDates.set(parsed.expiry, expiryDate);
+        }
+      }
+      
+      instrumentsByExpiry.get(parsed.expiry)!.push(name);
+    }
+    
+    // 使用智能雙到期日選擇
+    const expiryPair = findOptimalExpiryPair(expiryDates, targetDate);
+    if (!expiryPair) {
+      console.error('無法找到適合的雙到期日組合');
+      return null;
+    }
+    
+    // 獲取兩個到期日的選擇權數據
+    const shortTermInstruments = instrumentsByExpiry.get(expiryPair.shortExpiry) || [];
+    const longTermInstruments = instrumentsByExpiry.get(expiryPair.longExpiry) || [];
+    
+    console.log(`Short term (${expiryPair.shortExpiry}): ${shortTermInstruments.length} instruments`);
+    console.log(`Long term (${expiryPair.longExpiry}): ${longTermInstruments.length} instruments`);
+    
+    // 獲取短期選擇權數據
+    const shortTermOptions = await fetchOptionsForExpiry(shortTermInstruments, expiryPair.shortExpiry, priceType);
+    
+    // 獲取長期選擇權數據  
+    const longTermOptions = await fetchOptionsForExpiry(longTermInstruments, expiryPair.longExpiry, priceType);
+    
+    if (shortTermOptions.length === 0 || longTermOptions.length === 0) {
+      console.error('無法獲取足夠的雙到期日選擇權數據');
+      return null;
+    }
+    
+    // 計算到期時間（年為單位）
+    const shortTermTimeToExpiry = daysBetween(now, expiryDates.get(expiryPair.shortExpiry)!) / 365;
+    const longTermTimeToExpiry = daysBetween(now, expiryDates.get(expiryPair.longExpiry)!) / 365;
+    const targetTimeToExpiry = daysBetween(now, targetDate) / 365;
+    
+    // 計算平均隱含波動率
+    const shortTermAvgIV = shortTermOptions.reduce((sum, opt) => sum + opt.impliedVol, 0) / shortTermOptions.length;
+    const longTermAvgIV = longTermOptions.reduce((sum, opt) => sum + opt.impliedVol, 0) / longTermOptions.length;
+    
+    return {
+      shortTerm: {
+        expiry: expiryPair.shortExpiry,
+        timeToExpiry: shortTermTimeToExpiry,
+        impliedVol: shortTermAvgIV,
+        optionsData: shortTermOptions
+      },
+      longTerm: {
+        expiry: expiryPair.longExpiry,
+        timeToExpiry: longTermTimeToExpiry,
+        impliedVol: longTermAvgIV,
+        optionsData: longTermOptions
+      },
+      strategy: expiryPair.strategy,
+      targetTimeToExpiry: targetTimeToExpiry
+    };
+    
+  } catch (error) {
+    console.error('Error fetching dual expiry options data:', error);
+    return null;
+  }
+}
+
+// 輔助函數：獲取特定到期日的選擇權數據
+async function fetchOptionsForExpiry(
+  instruments: string[], 
+  expiry: string,
+  priceType: PriceType
+): Promise<OptionData[]> {
+  if (instruments.length === 0) return [];
+  
+  // 分批處理請求
+  const batchSize = 5;
+  const batches = [];
+  for (let i = 0; i < instruments.length; i += batchSize) {
+    batches.push(instruments.slice(i, i + batchSize));
+  }
+  
+  const priceResults = [];
+  for (const batch of batches) {
+    const batchPromises = batch.map(name => 
+      fetchInstrumentPrice(name)
+        .then(data => ({ name, data }))
+        .catch(error => {
+          console.warn(`Failed to fetch price for ${name}:`, error.message);
+          return null;
+        })
+    );
+    
+    const batchResults = await Promise.all(batchPromises);
+    priceResults.push(...batchResults);
+    
+    // 在批次之間添加短暫延遲
+    if (batches.indexOf(batch) < batches.length - 1) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+  }
+  
+  const validResults = priceResults.filter(result => result !== null);
+  
+  // 組織成選擇權鏈格式
+  const optionsMap = new Map<number, Partial<OptionData>>();
+  
+  for (const result of validResults) {
+    const parsed = parseInstrumentName(result!.name);
+    if (!parsed) continue;
+    
+    const strike = parsed.strike;
+    if (!optionsMap.has(strike)) {
+      optionsMap.set(strike, {
+        strike,
+        expiry: parsed.expiry,
+        callPrice: 0,
+        putPrice: 0,
+        impliedVol: 0
+      });
+    }
+    
+    const option = optionsMap.get(strike)!;
+    const priceData = Array.isArray(result!.data) ? result!.data[0] : result!.data;
+    
+    if (parsed.type === 'C') {
+      const markPrice = priceData.mark_price || 0;
+      const midPrice = priceData.bid_price && priceData.ask_price ? 
+                      (priceData.bid_price + priceData.ask_price) / 2 : 0;
+      const lastPrice = priceData.last || 0;
+      
+      switch (priceType) {
+        case 'mark':
+          option.callPrice = markPrice || midPrice || lastPrice || 0;
+          break;
+        case 'mid':
+          option.callPrice = midPrice || markPrice || lastPrice || 0;
+          break;
+        case 'last':
+          option.callPrice = lastPrice || markPrice || midPrice || 0;
+          break;
+      }
+      option.callBid = priceData.bid_price || 0;
+      option.callAsk = priceData.ask_price || 0;
+    } else {
+      const markPrice = priceData.mark_price || 0;
+      const midPrice = priceData.bid_price && priceData.ask_price ? 
+                      (priceData.bid_price + priceData.ask_price) / 2 : 0;
+      const lastPrice = priceData.last || 0;
+      
+      switch (priceType) {
+        case 'mark':
+          option.putPrice = markPrice || midPrice || lastPrice || 0;
+          break;
+        case 'mid':
+          option.putPrice = midPrice || markPrice || lastPrice || 0;
+          break;
+        case 'last':
+          option.putPrice = lastPrice || markPrice || midPrice || 0;
+          break;
+      }
+      option.putBid = priceData.bid_price || 0;
+      option.putAsk = priceData.ask_price || 0;
+    }
+    
+    // 使用implied volatility
+    option.impliedVol = priceData.mark_iv || 0;
+  }
+  
+  // 過濾出有完整call和put數據的合約
+  const completeOptions = Array.from(optionsMap.values())
+    .filter(option => option.callPrice! > 0 && option.putPrice! > 0) as OptionData[];
+    
+  return completeOptions.sort((a, b) => a.strike - b.strike);
 }

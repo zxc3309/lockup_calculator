@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchOptionsChain } from '@/lib/optionsService';
+import { fetchOptionsChain, fetchDualExpiryOptionsData } from '@/lib/optionsService';
+import { calculateDiscountFromDualExpiry } from '@/lib/calculator';
 import { Token, LockupPeriod } from '@/types';
 
 // Force this route to be dynamic
@@ -60,7 +61,41 @@ export async function GET(request: NextRequest) {
     console.log(`[API] Fetching options chain for ${token} ${period} with spot price ${spotPrice}`);
     
     const fetchStartTime = Date.now();
-    const optionsData = await fetchOptionsChain(token, period, spotPrice);
+    
+    // 先嘗試使用雙到期日方法
+    const dualExpiryData = await fetchDualExpiryOptionsData(token, period, spotPrice);
+    let optionsData: any[] = [];
+    let calculationMethod = 'single_expiry';
+    let dualExpiryCalculation = null;
+    
+    if (dualExpiryData) {
+      try {
+        console.log(`[API] Using dual expiry method with strategy: ${dualExpiryData.strategy}`);
+        const lockupDays = period === '3M' ? 90 : period === '6M' ? 180 : period === '1Y' ? 365 : 730;
+        dualExpiryCalculation = calculateDiscountFromDualExpiry(dualExpiryData, spotPrice, lockupDays);
+        calculationMethod = 'dual_expiry';
+        
+        // 使用長期合約作為展示數據
+        optionsData = dualExpiryData.longTerm.optionsData;
+        
+        debugLog.push({
+          step: 'dual_expiry_calculation',
+          timestamp: Date.now(),
+          strategy: dualExpiryData.strategy,
+          short_term_expiry: dualExpiryData.shortTerm.expiry,
+          long_term_expiry: dualExpiryData.longTerm.expiry,
+          extrapolated_volatility: dualExpiryCalculation.impliedVolatility
+        });
+      } catch (dualExpiryError) {
+        console.warn('[API] Dual expiry calculation failed, falling back to single expiry:', dualExpiryError);
+        // 如果雙到期日計算失敗，回退到單一到期日方法
+        optionsData = await fetchOptionsChain(token, period, spotPrice);
+      }
+    } else {
+      console.log('[API] Using single expiry method (dual expiry data unavailable)');
+      optionsData = await fetchOptionsChain(token, period, spotPrice);
+    }
+    
     const fetchDuration = Date.now() - fetchStartTime;
     
     debugLog.push({
@@ -108,6 +143,19 @@ export async function GET(request: NextRequest) {
         fetch_duration: fetchDuration,
       },
       quality: qualityChecks,
+      // 新增雙到期日計算相關信息
+      calculationMethod,
+      ...(dualExpiryCalculation && {
+        dualExpiryCalculation,
+        dualExpiryInfo: dualExpiryData ? {
+          strategy: dualExpiryData.strategy,
+          shortTermExpiry: dualExpiryData.shortTerm.expiry,
+          longTermExpiry: dualExpiryData.longTerm.expiry,
+          shortTermIV: dualExpiryData.shortTerm.impliedVol,
+          longTermIV: dualExpiryData.longTerm.impliedVol,
+          targetTimeToExpiry: dualExpiryData.targetTimeToExpiry
+        } : null
+      }),
       ...(debug && { debugLog })
     };
     

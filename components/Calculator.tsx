@@ -13,6 +13,7 @@ export default function Calculator() {
   const [calculation, setCalculation] = useState<DiscountCalculation | null>(null);
   const [optionsData, setOptionsData] = useState<OptionData[] | null>(null);
   const [optionsLoading, setOptionsLoading] = useState(false);
+  const [dualExpiryInfo, setDualExpiryInfo] = useState<any>(null);
   
   // 調試相關狀態
   const [debugMode, setDebugMode] = useState(false);
@@ -146,6 +147,15 @@ export default function Calculator() {
           const optionsResult = await optionsResponse.json();
           optionsChainData = optionsResult.optionsData || [];
           setOptionsData(optionsChainData);
+          
+          // 如果有雙到期日計算結果，直接使用
+          if (optionsResult.dualExpiryCalculation) {
+            optionsCalc = optionsResult.dualExpiryCalculation;
+            setDualExpiryInfo(optionsResult.dualExpiryInfo);
+            console.log(`使用雙到期日計算結果: ${optionsResult.calculationMethod}`);
+          } else {
+            setDualExpiryInfo(null);
+          }
           
           updateApiStatus('optionsData', {
             status: 'success',
@@ -422,13 +432,45 @@ export default function Calculator() {
         {calculation && (
           <div className="p-4 bg-blue-50 rounded-md">
             <h3 className="text-lg font-semibold mb-4">
-              計算結果 (多合約ATM加權平均)
+              計算結果 ({dualExpiryInfo ? '雙到期日方差外推法' : '多合約ATM加權平均'})
               {calculation.totalContracts && (
                 <span className="text-sm font-normal text-gray-600 ml-2">
                   ({calculation.totalContracts}個ATM合約)
                 </span>
               )}
             </h3>
+            
+            {/* 計算基準資訊 */}
+            {dualExpiryInfo && (
+              <div className="mb-4 p-3 bg-white rounded-md border border-blue-100">
+                <h4 className="font-medium mb-2 text-sm text-blue-800">📊 計算基準資訊</h4>
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <div className="text-gray-600 mb-1">計算策略</div>
+                    <div className="font-medium">
+                      {dualExpiryInfo.strategy === 'interpolation' ? '內插法' : 
+                       dualExpiryInfo.strategy === 'extrapolation' ? '外推法' : '有界外推法'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-gray-600 mb-1">目標鎖倉期限</div>
+                    <div className="font-medium">{(dualExpiryInfo.targetTimeToExpiry * 365).toFixed(0)}天</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-600 mb-1">短期到期日</div>
+                    <div className="font-medium">{dualExpiryInfo.shortTermExpiry} (IV: {dualExpiryInfo.shortTermIV.toFixed(1)}%)</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-600 mb-1">長期到期日</div>
+                    <div className="font-medium">{dualExpiryInfo.longTermExpiry} (IV: {dualExpiryInfo.longTermIV.toFixed(1)}%)</div>
+                  </div>
+                </div>
+                <div className="mt-2 pt-2 border-t border-blue-100">
+                  <div className="text-gray-600 text-xs mb-1">外推隱含波動率</div>
+                  <div className="font-semibold text-blue-700">{calculation.impliedVolatility?.toFixed(1)}%</div>
+                </div>
+              </div>
+            )}
             
             <div className="space-y-3">
               {/* 主要折扣率 */}
@@ -479,6 +521,7 @@ export default function Calculator() {
                           <th className="text-right pb-1">距離</th>
                           <th className="text-right pb-1">Call折扣</th>
                           <th className="text-right pb-1">Put折扣</th>
+                          <th className="text-right pb-1">波動率</th>
                           <th className="text-right pb-1">權重</th>
                         </tr>
                       </thead>
@@ -486,10 +529,21 @@ export default function Calculator() {
                         {calculation.atmCalculations.map((calc, index) => (
                           <tr key={index} className="border-b border-blue-50">
                             <td className="py-1">${calc.strike.toLocaleString()}</td>
-                            <td className="py-1">{calc.expiry}</td>
+                            <td className="py-1 text-xs">
+                              {calc.shortTermExpiry && calc.longTermExpiry ? 
+                                <div>
+                                  <div>{calc.shortTermExpiry}→{calc.longTermExpiry}</div>
+                                  <div className="text-gray-500">
+                                    ({calc.shortTermIV?.toFixed(1)}%→{calc.longTermIV?.toFixed(1)}%)
+                                  </div>
+                                </div>
+                                : calc.expiry
+                              }
+                            </td>
                             <td className="text-right py-1">${calc.atmDistance.toFixed(0)}</td>
                             <td className="text-right py-1 text-red-600">{calc.callDiscount.toFixed(2)}%</td>
                             <td className="text-right py-1 text-green-600">{calc.putDiscount.toFixed(2)}%</td>
+                            <td className="text-right py-1 font-semibold text-blue-600">{calc.impliedVolatility.toFixed(1)}%</td>
                             <td className="text-right py-1">{calc.weight.toFixed(3)}</td>
                           </tr>
                         ))}

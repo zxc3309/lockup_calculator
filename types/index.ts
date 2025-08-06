@@ -17,6 +17,35 @@ export interface ATMCalculation {
   weight: number;
   atmDistance: number;
   expiry: string;  // 到期日 (e.g., "26DEC25")
+  // 雙到期日計算相關資訊
+  shortTermIV?: number;    // 短期隱含波動率
+  longTermIV?: number;     // 長期隱含波動率
+  shortTermExpiry?: string; // 短期到期日
+  longTermExpiry?: string;  // 長期到期日
+  extrapolationStrategy?: ExtrapolationStrategy; // 外推策略
+}
+
+export enum ExtrapolationStrategy {
+  INTERPOLATION = 'interpolation',           // 內插：目標在兩個期限之間
+  EXTRAPOLATION = 'extrapolation',          // 外推：目標超出所有期限
+  BOUNDED_EXTRAPOLATION = 'bounded_extrapolation' // 有界外推：使用最佳兩個期限
+}
+
+export interface DualExpiryData {
+  shortTerm: {
+    expiry: string;
+    timeToExpiry: number;  // 年為單位
+    impliedVol: number;
+    optionsData: OptionData[];
+  };
+  longTerm: {
+    expiry: string;
+    timeToExpiry: number;  // 年為單位
+    impliedVol: number;
+    optionsData: OptionData[];
+  };
+  strategy: ExtrapolationStrategy;
+  targetTimeToExpiry: number;  // 目標鎖倉時間（年）
 }
 
 export interface DiscountCalculation {

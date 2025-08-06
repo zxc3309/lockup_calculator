@@ -1,4 +1,4 @@
-import { LockupPeriod, DiscountCalculation, OptionData } from '@/types';
+import { LockupPeriod, DiscountCalculation, OptionData, ATMCalculation, DualExpiryData, ExtrapolationStrategy } from '@/types';
 
 // 將鎖倉期轉換為天數
 export function lockupPeriodToDays(period: LockupPeriod): number {
@@ -279,4 +279,177 @@ export function calculateDiscountFromOptions(
   };
 }
 
+// 新的雙到期日折扣率計算函數
+export function calculateDiscountFromDualExpiry(
+  dualExpiryData: DualExpiryData,
+  spotPrice: number,
+  lockupDays: number,
+  riskFreeRate: number = 0.02
+): DiscountCalculation {
+  const targetTimeToExpiry = dualExpiryData.targetTimeToExpiry;
+  
+  console.log(`=== 雙到期日折扣率計算 ===`);
+  console.log(`短期: ${dualExpiryData.shortTerm.expiry} (${dualExpiryData.shortTerm.timeToExpiry.toFixed(3)}年, IV=${dualExpiryData.shortTerm.impliedVol.toFixed(1)}%)`);
+  console.log(`長期: ${dualExpiryData.longTerm.expiry} (${dualExpiryData.longTerm.timeToExpiry.toFixed(3)}年, IV=${dualExpiryData.longTerm.impliedVol.toFixed(1)}%)`);
+  console.log(`目標: ${targetTimeToExpiry.toFixed(3)}年, 策略: ${dualExpiryData.strategy}`);
+  
+  // 找到兩個到期日共同的ATM strikes
+  const shortTermStrikes = new Set(dualExpiryData.shortTerm.optionsData.map(o => o.strike));
+  const commonStrikes = dualExpiryData.longTerm.optionsData.filter(o => shortTermStrikes.has(o.strike));
+  
+  if (commonStrikes.length === 0) {
+    throw new Error('雙到期日數據中沒有共同的執行價格');
+  }
+  
+  // 選擇前5個最接近ATM的共同strikes
+  const sortedCommonStrikes = commonStrikes
+    .map(option => ({
+      ...option,
+      atmDistance: Math.abs(option.strike - spotPrice)
+    }))
+    .sort((a, b) => a.atmDistance - b.atmDistance)
+    .slice(0, 5);
+    
+  console.log(`找到 ${sortedCommonStrikes.length} 個共同的ATM執行價格`);
+  
+  // 對每個共同strike進行雙到期日計算
+  const calculations = sortedCommonStrikes.map(longTermOption => {
+    const shortTermOption = dualExpiryData.shortTerm.optionsData.find(o => o.strike === longTermOption.strike);
+    if (!shortTermOption) return null;
+    
+    // 計算外推隱含波動率
+    const extrapolatedIV = calculateExtrapolatedVolatility(
+      dualExpiryData.shortTerm.impliedVol / 100,
+      dualExpiryData.shortTerm.timeToExpiry,
+      dualExpiryData.longTerm.impliedVol / 100,
+      dualExpiryData.longTerm.timeToExpiry,
+      targetTimeToExpiry,
+      dualExpiryData.strategy
+    );
+    
+    console.log(`Strike ${longTermOption.strike}: 短期IV=${(dualExpiryData.shortTerm.impliedVol).toFixed(1)}%, 長期IV=${(dualExpiryData.longTerm.impliedVol).toFixed(1)}%, 外推IV=${(extrapolatedIV * 100).toFixed(1)}%`);
+    
+    // 計算理論價格
+    const theoreticalCallPrice = blackScholesCall(spotPrice, longTermOption.strike, targetTimeToExpiry, riskFreeRate, extrapolatedIV);
+    const theoreticalPutPrice = blackScholesPut(spotPrice, longTermOption.strike, targetTimeToExpiry, riskFreeRate, extrapolatedIV);
+    
+    // 計算折扣率
+    const callDiscount = (theoreticalCallPrice / spotPrice) * 100;
+    const putDiscount = (theoreticalPutPrice / spotPrice) * 100;
+    
+    // 計算流動性權重（使用長期合約的數據）
+    const spread = (longTermOption.callAsk || 0) - (longTermOption.callBid || 0) + (longTermOption.putAsk || 0) - (longTermOption.putBid || 0);
+    const avgPrice = (longTermOption.callPrice + longTermOption.putPrice) / 2;
+    const spreadRatio = spread / avgPrice;
+    const liquidityScore = 1 / (1 + spreadRatio);
+    
+    return {
+      strike: longTermOption.strike,
+      callDiscount,
+      putDiscount,
+      theoreticalCallPrice,
+      theoreticalPutPrice,
+      impliedVolatility: extrapolatedIV * 100,
+      weight: liquidityScore,
+      atmDistance: longTermOption.atmDistance,
+      expiry: `${dualExpiryData.shortTerm.expiry}+${dualExpiryData.longTerm.expiry}`,
+      // 雙到期日相關資訊
+      shortTermIV: dualExpiryData.shortTerm.impliedVol,
+      longTermIV: dualExpiryData.longTerm.impliedVol,
+      shortTermExpiry: dualExpiryData.shortTerm.expiry,
+      longTermExpiry: dualExpiryData.longTerm.expiry,
+      extrapolationStrategy: dualExpiryData.strategy
+    } as ATMCalculation;
+  }).filter(calc => calc !== null) as ATMCalculation[];
+  
+  if (calculations.length === 0) {
+    throw new Error('無法計算任何ATM合約的雙到期日折扣率');
+  }
+  
+  // 計算加權平均
+  const totalWeight = calculations.reduce((sum, calc) => sum + calc.weight, 0);
+  
+  const weightedCallDiscount = calculations.reduce((sum, calc) => 
+    sum + (calc.callDiscount * calc.weight), 0) / totalWeight;
+  const weightedPutDiscount = calculations.reduce((sum, calc) => 
+    sum + (calc.putDiscount * calc.weight), 0) / totalWeight;
+  const weightedVolatility = calculations.reduce((sum, calc) => 
+    sum + (calc.impliedVolatility * calc.weight), 0) / totalWeight;
+  const weightedCallPrice = calculations.reduce((sum, calc) => 
+    sum + (calc.theoreticalCallPrice * calc.weight), 0) / totalWeight;
+  const weightedPutPrice = calculations.reduce((sum, calc) => 
+    sum + (calc.theoreticalPutPrice * calc.weight), 0) / totalWeight;
+    
+  // 計算最終結果
+  const annualizedRate = (weightedCallDiscount * 365) / lockupDays;
+  const fairValue = spotPrice - weightedCallPrice;
+  
+  console.log(`=== 雙到期日計算結果 ===`);
+  console.log(`加權Call折扣: ${weightedCallDiscount.toFixed(2)}%`);
+  console.log(`加權Put折扣: ${weightedPutDiscount.toFixed(2)}%`);
+  console.log(`年化折扣率: ${annualizedRate.toFixed(2)}%`);
+  console.log(`合理購買價格: $${fairValue.toLocaleString()}`);
+  
+  return {
+    method: `雙到期日方差外推法 (${dualExpiryData.strategy})`,
+    discount: weightedCallDiscount,
+    annualizedRate,
+    fairValue,
+    callDiscount: weightedCallDiscount,
+    putDiscount: weightedPutDiscount,
+    impliedVolatility: weightedVolatility,
+    theoreticalCallPrice: weightedCallPrice,
+    theoreticalPutPrice: weightedPutPrice,
+    atmCalculations: calculations,
+    totalContracts: calculations.length
+  };
+}
 
+// 計算外推隱含波動率
+function calculateExtrapolatedVolatility(
+  shortTermVol: number,
+  shortTermTime: number,
+  longTermVol: number,
+  longTermTime: number,
+  targetTime: number,
+  strategy: ExtrapolationStrategy
+): number {
+  // 使用方差線性外推
+  const shortTermVariance = shortTermVol * shortTermVol * shortTermTime;
+  const longTermVariance = longTermVol * longTermVol * longTermTime;
+  
+  let targetVariance: number;
+  
+  switch (strategy) {
+    case ExtrapolationStrategy.INTERPOLATION:
+      // 內插：目標時間在兩個期限之間
+      targetVariance = shortTermVariance + 
+        (longTermVariance - shortTermVariance) * 
+        (targetTime - shortTermTime) / (longTermTime - shortTermTime);
+      break;
+      
+    case ExtrapolationStrategy.EXTRAPOLATION:
+      // 外推：目標時間超出所有期限
+      const slope = (longTermVariance - shortTermVariance) / (longTermTime - shortTermTime);
+      targetVariance = longTermVariance + slope * (targetTime - longTermTime);
+      break;
+      
+    case ExtrapolationStrategy.BOUNDED_EXTRAPOLATION:
+      // 有界外推：使用線性外推但限制合理範圍
+      const boundedSlope = (longTermVariance - shortTermVariance) / (longTermTime - shortTermTime);
+      targetVariance = shortTermVariance + boundedSlope * (targetTime - shortTermTime);
+      break;
+      
+    default:
+      targetVariance = shortTermVariance;
+  }
+  
+  // 確保方差為正值
+  targetVariance = Math.max(targetVariance, 0.01 * targetTime); // 最小1%年化方差
+  
+  // 計算目標隱含波動率
+  const targetVolatility = Math.sqrt(targetVariance / targetTime);
+  
+  // 合理性檢查：限制在20%-200%之間
+  return Math.min(Math.max(targetVolatility, 0.2), 2.0);
+}
