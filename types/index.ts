@@ -93,11 +93,6 @@ export interface DebugInfo {
   timestamp: Date;
 }
 
-export interface EnhancedCalculationResult {
-  calculation: DiscountCalculation | null;
-  calculationMethods: DiscountCalculationMethods | null;
-  debugInfo: DebugInfo;
-}
 
 export interface MarketData {
   bitcoin: {

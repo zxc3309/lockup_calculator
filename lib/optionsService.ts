@@ -52,7 +52,7 @@ async function getAccessToken(): Promise<string> {
     tokenExpiry = Date.now() + (data.result.expires_in - 60) * 1000;
     
     console.log('Deribit authentication successful');
-    return accessToken;
+    return accessToken!; // 使用non-null assertion因為我們剛剛賦值了
   } catch (error) {
     console.error('Error getting Deribit access token:', error);
     throw error;
@@ -417,7 +417,7 @@ export async function fetchOptionsChain(
         option.callBid = priceData.bid_price || 0;
         option.callAsk = priceData.ask_price || 0;
         
-        console.log(`Call ${strike}: Mark=${markPrice.toFixed(6)}, Mid=${midPrice.toFixed(6)}, Last=${lastPrice.toFixed(6)}, Final=${option.callPrice.toFixed(6)}`);
+        console.log(`Call ${strike}: Mark=${markPrice.toFixed(6)}, Mid=${midPrice.toFixed(6)}, Last=${lastPrice.toFixed(6)}, Final=${option.callPrice?.toFixed(6) || '0'}`);
       } else {
         // 詳細價格信息調試
         const markPrice = priceData.mark_price || 0;
@@ -440,7 +440,7 @@ export async function fetchOptionsChain(
         option.putBid = priceData.bid_price || 0;
         option.putAsk = priceData.ask_price || 0;
         
-        console.log(`Put ${strike}: Mark=${markPrice.toFixed(6)}, Mid=${midPrice.toFixed(6)}, Last=${lastPrice.toFixed(6)}, Final=${option.putPrice.toFixed(6)}`);
+        console.log(`Put ${strike}: Mark=${markPrice.toFixed(6)}, Mid=${midPrice.toFixed(6)}, Last=${lastPrice.toFixed(6)}, Final=${option.putPrice?.toFixed(6) || '0'}`);
       }
       
       // 使用implied volatility
