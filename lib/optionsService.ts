@@ -270,16 +270,25 @@ function findOptimalExpiryPair(
     return null;
   }
   
-  console.log(`Target date: ${targetDate.toDateString()}`);
-  console.log(`Available expiry dates: ${sortedExpiries.map(([exp, date]) => `${exp}(${date.toDateString()})`).join(', ')}`);
+  console.log(`=== 雙到期日選擇邏輯 ===`);
+  console.log(`目標日期: ${targetDate.toDateString()}`);
+  console.log(`可用到期日: ${sortedExpiries.map(([exp, date]) => `${exp}(${date.toDateString()})`).join(', ')}`);
+  
+  // 獲取第一個和最後一個到期日用於邊界判斷
+  const [firstExp, firstDate] = sortedExpiries[0];
+  const [lastExp, lastDate] = sortedExpiries[sortedExpiries.length - 1];
+  
+  console.log(`邊界檢查: 首個=${firstExp}(${firstDate.toDateString()}), 末個=${lastExp}(${lastDate.toDateString()})`);
   
   // 情況1：目標日期在某兩個到期日之間（內插）
   for (let i = 0; i < sortedExpiries.length - 1; i++) {
     const [shortExp, shortDate] = sortedExpiries[i];
     const [longExp, longDate] = sortedExpiries[i + 1];
     
+    console.log(`檢查內插: ${targetDate.toDateString()} 是否在 ${shortDate.toDateString()} 和 ${longDate.toDateString()} 之間`);
+    
     if (targetDate >= shortDate && targetDate <= longDate) {
-      console.log(`Strategy: INTERPOLATION between ${shortExp} and ${longExp}`);
+      console.log(`✅ 策略: INTERPOLATION between ${shortExp} and ${longExp}`);
       return {
         shortExpiry: shortExp,
         longExpiry: longExp,
@@ -289,12 +298,13 @@ function findOptimalExpiryPair(
   }
   
   // 情況2：目標日期超出所有可用期限（外推）
-  const lastTwoExpiries = sortedExpiries.slice(-2);
-  const [shortExp, shortDate] = lastTwoExpiries[0];
-  const [longExp, longDate] = lastTwoExpiries[1];
-  
-  if (targetDate > longDate) {
-    console.log(`Strategy: EXTRAPOLATION using ${shortExp} and ${longExp} (target beyond all available)`);
+  if (targetDate > lastDate) {
+    const lastTwoExpiries = sortedExpiries.slice(-2);
+    const [shortExp, shortDate] = lastTwoExpiries[0];
+    const [longExp, longDate] = lastTwoExpiries[1];
+    
+    console.log(`✅ 策略: EXTRAPOLATION using ${shortExp} and ${longExp} (目標超出所有可用期限)`);
+    console.log(`使用最後兩個到期日進行外推: ${shortExp}(${shortDate.toDateString()}) -> ${longExp}(${longDate.toDateString()}) -> 目標(${targetDate.toDateString()})`);
     return {
       shortExpiry: shortExp,
       longExpiry: longExp,
@@ -302,16 +312,55 @@ function findOptimalExpiryPair(
     };
   }
   
-  // 情況3：目標日期短於最短期限（使用前兩個期限）
-  const firstTwoExpiries = sortedExpiries.slice(0, 2);
-  const [shortExp2, shortDate2] = firstTwoExpiries[0];
-  const [longExp2, longDate2] = firstTwoExpiries[1];
+  // 情況3：目標日期短於最短期限（使用前兩個期限進行有界外推）
+  if (targetDate < firstDate) {
+    const firstTwoExpiries = sortedExpiries.slice(0, 2);
+    const [shortExp2, shortDate2] = firstTwoExpiries[0];
+    const [longExp2, longDate2] = firstTwoExpiries[1];
+    
+    console.log(`✅ 策略: BOUNDED_EXTRAPOLATION using ${shortExp2} and ${longExp2} (目標短於最短期限)`);
+    console.log(`使用前兩個到期日進行有界外推: 目標(${targetDate.toDateString()}) <- ${shortExp2}(${shortDate2.toDateString()}) <- ${longExp2}(${longDate2.toDateString()})`);
+    return {
+      shortExpiry: shortExp2,
+      longExpiry: longExp2,
+      strategy: ExtrapolationStrategy.BOUNDED_EXTRAPOLATION
+    };
+  }
   
-  console.log(`Strategy: BOUNDED_EXTRAPOLATION using ${shortExp2} and ${longExp2} (target before shortest)`);
+  // 備用情況：如果以上邏輯都沒有匹配，使用最接近的兩個期限
+  console.warn(`⚠️  未找到理想的雙到期日組合，使用備用策略`);
+  let closestIndex = 0;
+  let minDifference = Math.abs(targetDate.getTime() - sortedExpiries[0][1].getTime());
+  
+  for (let i = 1; i < sortedExpiries.length; i++) {
+    const difference = Math.abs(targetDate.getTime() - sortedExpiries[i][1].getTime());
+    if (difference < minDifference) {
+      minDifference = difference;
+      closestIndex = i;
+    }
+  }
+  
+  // 選擇最接近的期限和其相鄰期限
+  let shortIndex = Math.max(0, closestIndex - 1);
+  let longIndex = Math.min(sortedExpiries.length - 1, closestIndex + 1);
+  
+  // 確保我們有兩個不同的期限
+  if (shortIndex === longIndex) {
+    if (shortIndex > 0) {
+      shortIndex--;
+    } else {
+      longIndex++;
+    }
+  }
+  
+  const [shortExp, shortDate] = sortedExpiries[shortIndex];
+  const [longExp, longDate] = sortedExpiries[longIndex];
+  
+  console.log(`🔄 備用策略: 使用最接近的兩個期限 ${shortExp} and ${longExp}`);
   return {
-    shortExpiry: shortExp2,
-    longExpiry: longExp2,
-    strategy: ExtrapolationStrategy.BOUNDED_EXTRAPOLATION
+    shortExpiry: shortExp,
+    longExpiry: longExp,
+    strategy: ExtrapolationStrategy.INTERPOLATION // 默認使用內插策略
   };
 }
 

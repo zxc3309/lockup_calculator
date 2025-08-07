@@ -120,6 +120,7 @@ export interface CalculationStep {
   description?: string;
   duration?: number;
   errorMessage?: string;
+  timestamp?: Date;
 }
 
 export interface DebugInfo {

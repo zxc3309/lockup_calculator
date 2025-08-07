@@ -58,42 +58,145 @@ export async function GET(request: NextRequest) {
       validated_params: { token, period, spotPrice }
     });
     
-    console.log(`[API] Fetching options chain for ${token} ${period} with spot price ${spotPrice}`);
+    console.log(`[API] 🚀 開始獲取 ${token} ${period} 選擇權數據，現貨價格: $${spotPrice.toLocaleString()}`);
     
     const fetchStartTime = Date.now();
     
-    // 先嘗試使用雙到期日方法
-    const dualExpiryData = await fetchDualExpiryOptionsData(token, period, spotPrice);
+    // Phase 1: 嘗試使用雙到期日方法
+    console.log(`[API] 📊 Phase 1: 嘗試雙到期日方差外推法...`);
+    
+    debugLog.push({
+      step: 'dual_expiry_attempt',
+      timestamp: Date.now(),
+      phase: 1,
+      method: 'dual_expiry_variance_extrapolation'
+    });
+    
+    let dualExpiryData = null;
+    let dualExpiryError = null;
+    
+    try {
+      dualExpiryData = await fetchDualExpiryOptionsData(token, period, spotPrice);
+      console.log(`[API] ✅ 雙到期日數據獲取${dualExpiryData ? '成功' : '失敗'}`);
+      
+      if (dualExpiryData) {
+        console.log(`[API] 📈 雙到期日策略: ${dualExpiryData.strategy}`);
+        console.log(`[API] 📈 短期: ${dualExpiryData.shortTerm.expiry} (${dualExpiryData.shortTerm.optionsData.length}個合約)`);
+        console.log(`[API] 📈 長期: ${dualExpiryData.longTerm.expiry} (${dualExpiryData.longTerm.optionsData.length}個合約)`);
+        console.log(`[API] 📈 目標時間: ${dualExpiryData.targetTimeToExpiry.toFixed(3)}年`);
+      }
+    } catch (error) {
+      dualExpiryError = error;
+      console.error(`[API] ❌ 雙到期日數據獲取失敗:`, error);
+    }
+    
+    // Phase 2: 雙到期日折扣率計算
     let optionsData: any[] = [];
-    let calculationMethod = 'single_expiry';
+    let calculationMethod = 'single_expiry_fallback';
     let dualExpiryCalculation = null;
+    let calculationError = null;
     
     if (dualExpiryData) {
+      console.log(`[API] 🧮 Phase 2: 執行雙到期日折扣率計算...`);
+      
       try {
-        console.log(`[API] Using dual expiry method with strategy: ${dualExpiryData.strategy}`);
         const lockupDays = period === '3M' ? 90 : period === '6M' ? 180 : period === '1Y' ? 365 : 730;
+        
+        debugLog.push({
+          step: 'dual_expiry_calculation_start',
+          timestamp: Date.now(),
+          phase: 2,
+          lockup_days: lockupDays,
+          strategy: dualExpiryData.strategy,
+          short_term_expiry: dualExpiryData.shortTerm.expiry,
+          long_term_expiry: dualExpiryData.longTerm.expiry
+        });
+        
         dualExpiryCalculation = calculateDiscountFromDualExpiry(dualExpiryData, spotPrice, lockupDays);
-        calculationMethod = 'dual_expiry';
+        calculationMethod = 'dual_expiry_variance_extrapolation';
         
         // 使用長期合約作為展示數據
         optionsData = dualExpiryData.longTerm.optionsData;
         
+        console.log(`[API] ✅ 雙到期日計算成功!`);
+        console.log(`[API] 💰 Call折扣: ${dualExpiryCalculation.callDiscount?.toFixed(2)}%`);
+        console.log(`[API] 💰 Put折扣: ${dualExpiryCalculation.putDiscount?.toFixed(2)}%`);
+        console.log(`[API] 📊 外推波動率: ${dualExpiryCalculation.impliedVolatility?.toFixed(1)}%`);
+        
         debugLog.push({
-          step: 'dual_expiry_calculation',
+          step: 'dual_expiry_calculation_success',
           timestamp: Date.now(),
-          strategy: dualExpiryData.strategy,
-          short_term_expiry: dualExpiryData.shortTerm.expiry,
-          long_term_expiry: dualExpiryData.longTerm.expiry,
-          extrapolated_volatility: dualExpiryCalculation.impliedVolatility
+          phase: 2,
+          call_discount: dualExpiryCalculation.callDiscount,
+          put_discount: dualExpiryCalculation.putDiscount,
+          extrapolated_volatility: dualExpiryCalculation.impliedVolatility,
+          total_contracts: dualExpiryCalculation.totalContracts
         });
-      } catch (dualExpiryError) {
-        console.warn('[API] Dual expiry calculation failed, falling back to single expiry:', dualExpiryError);
-        // 如果雙到期日計算失敗，回退到單一到期日方法
-        optionsData = await fetchOptionsChain(token, period, spotPrice);
+        
+      } catch (error) {
+        calculationError = error;
+        console.error(`[API] ❌ 雙到期日計算失敗:`, error);
+        
+        debugLog.push({
+          step: 'dual_expiry_calculation_error',
+          timestamp: Date.now(),
+          phase: 2,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          error_type: error instanceof Error ? error.constructor.name : 'Unknown'
+        });
       }
-    } else {
-      console.log('[API] Using single expiry method (dual expiry data unavailable)');
-      optionsData = await fetchOptionsChain(token, period, spotPrice);
+    }
+    
+    // Phase 3: Fallback to Single Expiry Method
+    if (!dualExpiryCalculation) {
+      console.log(`[API] 🔄 Phase 3: 回退到單一到期日方法...`);
+      console.log(`[API] 🔄 回退原因: ${dualExpiryData ? '計算失敗' : '數據獲取失敗'}`);
+      
+      if (dualExpiryError) {
+        console.log(`[API] 🔄 雙到期日獲取錯誤: ${dualExpiryError instanceof Error ? dualExpiryError.message : String(dualExpiryError)}`);
+      }
+      if (calculationError) {
+        console.log(`[API] 🔄 雙到期日計算錯誤: ${calculationError instanceof Error ? calculationError.message : String(calculationError)}`);
+      }
+      
+      debugLog.push({
+        step: 'fallback_to_single_expiry',
+        timestamp: Date.now(),
+        phase: 3,
+        reason: dualExpiryData ? 'calculation_failed' : 'data_fetch_failed',
+        dual_expiry_error: dualExpiryError instanceof Error ? dualExpiryError.message : String(dualExpiryError),
+        calculation_error: calculationError instanceof Error ? calculationError.message : String(calculationError)
+      });
+      
+      try {
+        optionsData = await fetchOptionsChain(token, period, spotPrice);
+        calculationMethod = 'single_expiry_nearest_match';
+        
+        console.log(`[API] ✅ 單一到期日數據獲取成功: ${optionsData.length}個合約`);
+        
+        debugLog.push({
+          step: 'single_expiry_success',
+          timestamp: Date.now(),
+          phase: 3,
+          contracts_found: optionsData.length
+        });
+        
+      } catch (singleExpiryError) {
+        console.error(`[API] ❌ 單一到期日方法也失敗了:`, singleExpiryError);
+        
+        debugLog.push({
+          step: 'single_expiry_failed',
+          timestamp: Date.now(),
+          phase: 3,
+          error: singleExpiryError instanceof Error ? singleExpiryError.message : 'Unknown error'
+        });
+        
+        // 如果所有方法都失敗，拋出錯誤
+        const dualErrorMsg = dualExpiryError instanceof Error ? dualExpiryError.message : String(dualExpiryError || 'N/A');
+        const calcErrorMsg = calculationError instanceof Error ? calculationError.message : String(calculationError || 'N/A');
+        const singleErrorMsg = singleExpiryError instanceof Error ? singleExpiryError.message : String(singleExpiryError);
+        throw new Error(`所有選擇權數據獲取方法都失敗了。雙到期日錯誤: ${dualErrorMsg}, 計算錯誤: ${calcErrorMsg}, 單一到期日錯誤: ${singleErrorMsg}`);
+      }
     }
     
     const fetchDuration = Date.now() - fetchStartTime;

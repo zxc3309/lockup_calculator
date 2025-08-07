@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { Token, LockupPeriod, PriceData, DiscountCalculation, OptionData, DebugInfo, CalculationStep, DataFetchStatus, ApiCallStatus, RawATMContract } from '@/types';
 import { lockupPeriodToDays, calculateDiscountFromOptions, validateOptionsData } from '@/lib/calculator';
 import DebugPanel from './DebugPanel';
+import CalculationFlow, { CALCULATION_STEPS_TEMPLATE } from './CalculationFlow';
+import DiscountResults from './DiscountResults';
 
 export default function Calculator() {
   const [token, setToken] = useState<Token>('BTC');
@@ -20,9 +22,45 @@ export default function Calculator() {
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
   const [debugPanelOpen, setDebugPanelOpen] = useState(false);
 
+  // 新的UI狀態
+  const [calculationSteps, setCalculationSteps] = useState<CalculationStep[]>([]);
+  const [showCalculationFlow, setShowCalculationFlow] = useState(false);
+  const [currentStep, setCurrentStep] = useState<string>('');
+
+  // 計算步驟管理函數
+  const initializeCalculationSteps = () => {
+    const steps = [
+      { ...CALCULATION_STEPS_TEMPLATE.MARKET_DATA },
+      { ...CALCULATION_STEPS_TEMPLATE.DUAL_EXPIRY_SELECTION },
+      { ...CALCULATION_STEPS_TEMPLATE.COMMON_STRIKES },
+      { ...CALCULATION_STEPS_TEMPLATE.VARIANCE_EXTRAPOLATION },
+      { ...CALCULATION_STEPS_TEMPLATE.BLACK_SCHOLES },
+      { ...CALCULATION_STEPS_TEMPLATE.DISCOUNT_CALCULATION }
+    ];
+    setCalculationSteps(steps);
+    setShowCalculationFlow(true);
+  };
+
+  const updateCalculationStep = (stepId: string, updates: Partial<CalculationStep>) => {
+    setCalculationSteps(prev => prev.map(step => 
+      step.id === stepId 
+        ? { ...step, ...updates, timestamp: new Date() }
+        : step
+    ));
+    setCurrentStep(stepId);
+  };
+
   const updatePrices = async () => {
     setLoading(true);
     setOptionsLoading(true);
+    
+    // 初始化計算步驟
+    initializeCalculationSteps();
+    
+    // 重置之前的結果
+    setCalculation(null);
+    setDualExpiryInfo(null);
+    setOptionsData(null);
     
     // 初始化調試信息
     const startTime = Date.now();
@@ -73,6 +111,11 @@ export default function Calculator() {
       });
       
       // 步驟1: 獲取現貨價格
+      updateCalculationStep('market-data', {
+        status: 'processing',
+        description: `正在從 CoinGecko API 獲取 ${token} 現貨價格...`
+      });
+      
       addCalculationStep({
         name: '獲取現貨價格',
         status: 'processing',
@@ -96,6 +139,12 @@ export default function Calculator() {
           duration: priceDuration,
           errorMessage: `HTTP ${priceResponse.status}`
         });
+        
+        updateCalculationStep('market-data', {
+          status: 'error',
+          description: `現貨價格獲取失敗: HTTP ${priceResponse.status}`
+        });
+        
         throw new Error('Failed to fetch prices');
       }
       
@@ -110,6 +159,13 @@ export default function Calculator() {
       debugInfo.rawData.spotPriceResponse = priceData;
       setPrices(priceData);
       
+      updateCalculationStep('market-data', {
+        status: 'completed',
+        description: `✅ ${token} 現貨價格: $${priceData.spot.toLocaleString()}`,
+        output: { spotPrice: priceData.spot, source: 'CoinGecko' },
+        duration: priceDuration
+      });
+      
       addCalculationStep({
         name: '獲取現貨價格',
         status: 'completed',
@@ -120,9 +176,14 @@ export default function Calculator() {
         duration: priceDuration
       });
       
-      // 步驟2: 獲取選擇權數據並計算
+      // 步驟2: 雙到期日選擇權數據獲取
       let optionsCalc: DiscountCalculation | null = null;
       let optionsChainData: OptionData[] = [];
+      
+      updateCalculationStep('dual-expiry-selection', {
+        status: 'processing',
+        description: '正在嘗試雙到期日方差外推法...'
+      });
       
       addCalculationStep({
         name: '獲取選擇權數據',
@@ -148,13 +209,74 @@ export default function Calculator() {
           optionsChainData = optionsResult.optionsData || [];
           setOptionsData(optionsChainData);
           
-          // 如果有雙到期日計算結果，直接使用
+          // 檢查計算方法並更新相應步驟
           if (optionsResult.dualExpiryCalculation) {
             optionsCalc = optionsResult.dualExpiryCalculation;
             setDualExpiryInfo(optionsResult.dualExpiryInfo);
             console.log(`使用雙到期日計算結果: ${optionsResult.calculationMethod}`);
+            
+            // 更新所有雙到期日相關步驟為完成狀態
+            updateCalculationStep('dual-expiry-selection', {
+              status: 'completed',
+              description: `✅ 策略: ${optionsResult.dualExpiryInfo?.strategy === 'interpolation' ? '內插法' : 
+                                    optionsResult.dualExpiryInfo?.strategy === 'extrapolation' ? '外推法' : '有界外推法'}`,
+              output: {
+                strategy: optionsResult.dualExpiryInfo?.strategy,
+                shortTermExpiry: optionsResult.dualExpiryInfo?.shortTermExpiry,
+                longTermExpiry: optionsResult.dualExpiryInfo?.longTermExpiry
+              },
+              duration: optionsDuration
+            });
+            
+            updateCalculationStep('common-strikes', {
+              status: 'completed',
+              description: `✅ 找到 ${optionsCalc?.totalContracts || 0} 個共同ATM執行價格`,
+              output: { commonStrikes: optionsCalc?.totalContracts || 0 }
+            });
+            
+            updateCalculationStep('variance-extrapolation', {
+              status: 'completed',
+              description: `✅ 外推波動率: ${optionsCalc?.impliedVolatility?.toFixed(1)}%`,
+              output: { 
+                shortTermIV: optionsResult.dualExpiryInfo?.shortTermIV,
+                longTermIV: optionsResult.dualExpiryInfo?.longTermIV,
+                extrapolatedIV: optionsCalc?.impliedVolatility 
+              }
+            });
+            
+            updateCalculationStep('black-scholes', {
+              status: 'completed',
+              description: `✅ 計算理論期權價格 (Call: $${optionsCalc?.theoreticalCallPrice?.toFixed(0) || 0}, Put: $${optionsCalc?.theoreticalPutPrice?.toFixed(0) || 0})`,
+              output: {
+                callPrice: optionsCalc?.theoreticalCallPrice,
+                putPrice: optionsCalc?.theoreticalPutPrice
+              }
+            });
+            
+            updateCalculationStep('discount-calculation', {
+              status: 'completed',
+              description: `✅ Call折扣: ${optionsCalc?.callDiscount?.toFixed(2)}%, Put折扣: ${optionsCalc?.putDiscount?.toFixed(2)}%`,
+              output: {
+                callDiscount: optionsCalc?.callDiscount,
+                putDiscount: optionsCalc?.putDiscount,
+                annualizedRate: optionsCalc?.annualizedRate
+              }
+            });
           } else {
+            // 回退到單一到期日方法
             setDualExpiryInfo(null);
+            updateCalculationStep('dual-expiry-selection', {
+              status: 'error',
+              description: '❌ 雙到期日方法失敗，回退到單一到期日方法'
+            });
+            
+            // 將其他步驟標記為跳過
+            ['common-strikes', 'variance-extrapolation'].forEach(stepId => {
+              updateCalculationStep(stepId, {
+                status: 'pending',
+                description: '⏭️ 跳過 (使用單一到期日方法)'
+              });
+            });
           }
           
           updateApiStatus('optionsData', {
@@ -436,232 +558,28 @@ export default function Calculator() {
           </div>
         )}
 
+        {/* Calculation Flow */}
+        {showCalculationFlow && calculationSteps.length > 0 && (
+          <div className="mb-6">
+            <CalculationFlow 
+              steps={calculationSteps}
+              currentStep={currentStep}
+              isVisible={showCalculationFlow}
+              onToggle={() => setShowCalculationFlow(!showCalculationFlow)}
+            />
+          </div>
+        )}
+
         {/* Results */}
-        {calculation && (
-          <div className="p-4 bg-blue-50 rounded-md">
-            <h3 className="text-lg font-semibold mb-4">
-              計算結果 ({dualExpiryInfo ? '雙到期日方差外推法' : '多合約ATM加權平均'})
-              {calculation.totalContracts && (
-                <span className="text-sm font-normal text-gray-600 ml-2">
-                  ({calculation.totalContracts}個ATM合約)
-                </span>
-              )}
-            </h3>
-            
-            {/* 計算基準資訊 */}
-            {dualExpiryInfo && (
-              <div className="mb-4 p-3 bg-white rounded-md border border-blue-100">
-                <h4 className="font-medium mb-2 text-sm text-blue-800">📊 計算基準資訊</h4>
-                <div className="grid grid-cols-2 gap-4 text-xs">
-                  <div>
-                    <div className="text-gray-600 mb-1">計算策略</div>
-                    <div className="font-medium">
-                      {dualExpiryInfo.strategy === 'interpolation' ? '內插法' : 
-                       dualExpiryInfo.strategy === 'extrapolation' ? '外推法' : '有界外推法'}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-gray-600 mb-1">目標鎖倉期限</div>
-                    <div className="font-medium">{(dualExpiryInfo.targetTimeToExpiry * 365).toFixed(0)}天</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-600 mb-1">短期到期日</div>
-                    <div className="font-medium">{dualExpiryInfo.shortTermExpiry} (IV: {dualExpiryInfo.shortTermIV.toFixed(1)}%)</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-600 mb-1">長期到期日</div>
-                    <div className="font-medium">{dualExpiryInfo.longTermExpiry} (IV: {dualExpiryInfo.longTermIV.toFixed(1)}%)</div>
-                  </div>
-                </div>
-                <div className="mt-2 pt-2 border-t border-blue-100">
-                  <div className="text-gray-600 text-xs mb-1">外推隱含波動率</div>
-                  <div className="font-semibold text-blue-700">{calculation.impliedVolatility?.toFixed(1)}%</div>
-                </div>
-              </div>
-            )}
-            
-            <div className="space-y-3">
-              {/* 主要折扣率 */}
-              <div className="flex justify-between">
-                <span className="text-gray-600">主要折扣率 (Call):</span>
-                <span className="font-medium">{formatPercentage(calculation.discount)}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-gray-600">年化折扣率:</span>
-                <span className="font-medium">{formatPercentage(calculation.annualizedRate)}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-gray-600">合理購買價格:</span>
-                <span className="font-medium">{formatCurrency(calculation.fairValue)}</span>
-              </div>
-              
-              {/* Call vs Put 折扣對比 */}
-              {calculation.callDiscount !== undefined && calculation.putDiscount !== undefined && (
-                <div className="mt-4 pt-4 border-t border-blue-200">
-                  <h4 className="font-medium mb-3 text-sm">Call vs Put 折扣分析</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-white p-3 rounded">
-                      <div className="text-xs text-gray-500 mb-1">Call折扣 (機會成本)</div>
-                      <div className="font-semibold text-red-600">{formatPercentage(calculation.callDiscount)}</div>
-                      <div className="text-xs text-gray-500 mt-1">錯過上漲潛在收益</div>
-                    </div>
-                    <div className="bg-white p-3 rounded">
-                      <div className="text-xs text-gray-500 mb-1">Put折扣 (保險成本)</div>
-                      <div className="font-semibold text-green-600">{formatPercentage(calculation.putDiscount)}</div>
-                      <div className="text-xs text-gray-500 mt-1">防止下跌保險費用</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {/* ATM合約詳細信息 - 雙到期日原始市場數據 */}
-              {dualExpiryInfo && calculation.rawShortTermContracts && calculation.rawLongTermContracts && (
-                <div className="mt-4 pt-4 border-t border-blue-200">
-                  <h4 className="font-medium mb-3 text-sm">ATM合約明細 (原始市場數據)</h4>
-                  
-                  {/* 短期到期日合約 */}
-                  <div className="mb-4">
-                    <h5 className="font-medium mb-2 text-xs text-gray-700">短期到期日: {dualExpiryInfo.shortTermExpiry}</h5>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-xs">
-                        <thead>
-                          <tr className="border-b border-gray-200">
-                            <th className="text-left pb-1">執行價</th>
-                            <th className="text-right pb-1">距離</th>
-                            <th className="text-right pb-1">Call價格</th>
-                            <th className="text-right pb-1">Put價格</th>
-                            <th className="text-right pb-1">市場波動率</th>
-                            <th className="text-right pb-1">權重</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {calculation.rawShortTermContracts.map((contract, index) => {
-                            const discounts = calculateRawContractDiscount(contract, prices?.spot || 0);
-                            return (
-                              <tr key={index} className="border-b border-gray-100">
-                                <td className="py-1">${contract.strike.toLocaleString()}</td>
-                                <td className="text-right py-1">${contract.atmDistance.toFixed(0)}</td>
-                                <td className="text-right py-1">${contract.callPrice.toFixed(3)}</td>
-                                <td className="text-right py-1">${contract.putPrice.toFixed(3)}</td>
-                                <td className="text-right py-1 font-semibold text-indigo-600">{contract.impliedVol.toFixed(1)}%</td>
-                                <td className="text-right py-1">{contract.weight?.toFixed(3) || 'N/A'}</td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  {/* 長期到期日合約 */}
-                  <div>
-                    <h5 className="font-medium mb-2 text-xs text-gray-700">長期到期日: {dualExpiryInfo.longTermExpiry}</h5>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-xs">
-                        <thead>
-                          <tr className="border-b border-gray-200">
-                            <th className="text-left pb-1">執行價</th>
-                            <th className="text-right pb-1">距離</th>
-                            <th className="text-right pb-1">Call價格</th>
-                            <th className="text-right pb-1">Put價格</th>
-                            <th className="text-right pb-1">市場波動率</th>
-                            <th className="text-right pb-1">權重</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {calculation.rawLongTermContracts.map((contract, index) => {
-                            const discounts = calculateRawContractDiscount(contract, prices?.spot || 0);
-                            return (
-                              <tr key={index} className="border-b border-gray-100">
-                                <td className="py-1">${contract.strike.toLocaleString()}</td>
-                                <td className="text-right py-1">${contract.atmDistance.toFixed(0)}</td>
-                                <td className="text-right py-1">${contract.callPrice.toFixed(3)}</td>
-                                <td className="text-right py-1">${contract.putPrice.toFixed(3)}</td>
-                                <td className="text-right py-1 font-semibold text-indigo-600">{contract.impliedVol.toFixed(1)}%</td>
-                                <td className="text-right py-1">{contract.weight?.toFixed(3) || 'N/A'}</td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* 單一到期日ATM合約 (fallback) */}
-              {!dualExpiryInfo && calculation.atmCalculations && calculation.atmCalculations.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-blue-200">
-                  <h4 className="font-medium mb-3 text-sm">ATM合約明細</h4>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-xs">
-                      <thead>
-                        <tr className="border-b border-blue-100">
-                          <th className="text-left pb-1">執行價</th>
-                          <th className="text-left pb-1">到期日</th>
-                          <th className="text-right pb-1">距離</th>
-                          <th className="text-right pb-1">Call折扣</th>
-                          <th className="text-right pb-1">Put折扣</th>
-                          <th className="text-right pb-1">波動率</th>
-                          <th className="text-right pb-1">權重</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {calculation.atmCalculations.map((calc, index) => (
-                          <tr key={index} className="border-b border-blue-50">
-                            <td className="py-1">${calc.strike.toLocaleString()}</td>
-                            <td className="py-1">{calc.expiry}</td>
-                            <td className="text-right py-1">${calc.atmDistance.toFixed(0)}</td>
-                            <td className="text-right py-1 text-red-600">{calc.callDiscount.toFixed(2)}%</td>
-                            <td className="text-right py-1 text-green-600">{calc.putDiscount.toFixed(2)}%</td>
-                            <td className="text-right py-1 font-semibold text-blue-600">{calc.impliedVolatility.toFixed(1)}%</td>
-                            <td className="text-right py-1">{calc.weight.toFixed(3)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-              
-              {/* 波動率信息 */}
-              {calculation.impliedVolatility !== undefined && (
-                <div className="mt-4 pt-4 border-t border-blue-200">
-                  <h4 className="font-medium mb-2 text-sm">加權平均市場參數</h4>
-                  <div className="text-sm space-y-1">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">隱含波動率:</span>
-                      <span>{calculation.impliedVolatility.toFixed(1)}%</span>
-                    </div>
-                    {calculation.theoreticalCallPrice !== undefined && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">理論Call價格:</span>
-                        <span>{formatCurrency(calculation.theoreticalCallPrice)}</span>
-                      </div>
-                    )}
-                    {calculation.theoreticalPutPrice !== undefined && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">理論Put價格:</span>
-                        <span>{formatCurrency(calculation.theoreticalPutPrice)}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Options Data Summary */}
-            {optionsData && optionsData.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-blue-200">
-                <h4 className="font-medium mb-2 text-sm">選擇權數據</h4>
-                <div className="text-xs text-gray-600">
-                  <p>可用合約: {optionsData.length} 個</p>
-                  <p>價格範圍: {formatCurrency(Math.min(...optionsData.map(o => o.strike)))} - {formatCurrency(Math.max(...optionsData.map(o => o.strike)))}</p>
-                </div>
-              </div>
-            )}
+        {calculation && prices && (
+          <div className="mb-6">
+            <DiscountResults
+              calculation={calculation}
+              spotPrice={prices.spot}
+              dualExpiryInfo={dualExpiryInfo}
+              token={token}
+              period={period}
+            />
           </div>
         )}
 
