@@ -414,9 +414,16 @@ function calculateExtrapolatedVolatility(
   targetTime: number,
   strategy: ExtrapolationStrategy
 ): number {
+  console.log(`=== 波動率外推計算 ===`);
+  console.log(`短期: ${shortTermTime.toFixed(3)}年, IV=${shortTermVol.toFixed(1)}%`);
+  console.log(`長期: ${longTermTime.toFixed(3)}年, IV=${longTermVol.toFixed(1)}%`);
+  console.log(`目標: ${targetTime.toFixed(3)}年, 策略: ${strategy}`);
+  
   // 使用方差線性外推
   const shortTermVariance = shortTermVol * shortTermVol * shortTermTime;
   const longTermVariance = longTermVol * longTermVol * longTermTime;
+  
+  console.log(`短期方差: ${shortTermVariance.toFixed(4)}, 長期方差: ${longTermVariance.toFixed(4)}`);
   
   let targetVariance: number;
   
@@ -426,18 +433,33 @@ function calculateExtrapolatedVolatility(
       targetVariance = shortTermVariance + 
         (longTermVariance - shortTermVariance) * 
         (targetTime - shortTermTime) / (longTermTime - shortTermTime);
+      console.log(`內插計算: ${targetVariance.toFixed(4)}`);
       break;
       
     case ExtrapolationStrategy.EXTRAPOLATION:
       // 外推：目標時間超出所有期限
       const slope = (longTermVariance - shortTermVariance) / (longTermTime - shortTermTime);
       targetVariance = longTermVariance + slope * (targetTime - longTermTime);
+      console.log(`外推斜率: ${slope.toFixed(4)}, 外推距離: ${(targetTime - longTermTime).toFixed(3)}年`);
+      console.log(`外推計算: ${longTermVariance.toFixed(4)} + ${slope.toFixed(4)} × ${(targetTime - longTermTime).toFixed(3)} = ${targetVariance.toFixed(4)}`);
+      
+      // 對於長期外推，應用理論上的波動率期限結構調整
+      // 通常情況下，長期隱含波動率會趨向於歷史長期平均值
+      if (targetTime > 1.0) {
+        // 對於超過1年的期限，適當增強波動率外推
+        const timeScalingFactor = Math.sqrt(targetTime / longTermTime);
+        const baseVolatility = Math.sqrt(longTermVariance / longTermTime);
+        const enhancedVolatility = baseVolatility * (1 + 0.05 * Math.log(targetTime)); // 每年增加約5%的波動率增長
+        targetVariance = enhancedVolatility * enhancedVolatility * targetTime;
+        console.log(`長期外推增強: 基礎波動率${baseVolatility.toFixed(3)} → 增強波動率${enhancedVolatility.toFixed(3)}`);
+      }
       break;
       
     case ExtrapolationStrategy.BOUNDED_EXTRAPOLATION:
       // 有界外推：使用線性外推但限制合理範圍
       const boundedSlope = (longTermVariance - shortTermVariance) / (longTermTime - shortTermTime);
       targetVariance = shortTermVariance + boundedSlope * (targetTime - shortTermTime);
+      console.log(`有界外推計算: ${targetVariance.toFixed(4)}`);
       break;
       
     default:
@@ -450,6 +472,13 @@ function calculateExtrapolatedVolatility(
   // 計算目標隱含波動率
   const targetVolatility = Math.sqrt(targetVariance / targetTime);
   
+  console.log(`最終波動率: ${targetVolatility.toFixed(3)} (${(targetVolatility * 100).toFixed(1)}%)`);
+  
   // 合理性檢查：限制在20%-200%之間
-  return Math.min(Math.max(targetVolatility, 0.2), 2.0);
+  const finalVolatility = Math.min(Math.max(targetVolatility, 0.2), 2.0);
+  if (finalVolatility !== targetVolatility) {
+    console.log(`波動率限制調整: ${targetVolatility.toFixed(3)} → ${finalVolatility.toFixed(3)}`);
+  }
+  
+  return finalVolatility;
 }
