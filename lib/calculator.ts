@@ -1,4 +1,4 @@
-import { LockupPeriod, DiscountCalculation, OptionData, ATMCalculation, DualExpiryData, ExtrapolationStrategy } from '@/types';
+import { LockupPeriod, DiscountCalculation, OptionData, ATMCalculation, DualExpiryData, ExtrapolationStrategy, RawATMContract } from '@/types';
 
 // 將鎖倉期轉換為天數
 export function lockupPeriodToDays(period: LockupPeriod): number {
@@ -380,6 +380,46 @@ export function calculateDiscountFromDualExpiry(
   const weightedPutPrice = calculations.reduce((sum, calc) => 
     sum + (calc.theoreticalPutPrice * calc.weight), 0) / totalWeight;
     
+  // 準備原始合約數據
+  const rawShortTermContracts: RawATMContract[] = sortedCommonStrikes.map(longTermOption => {
+    const shortTermOption = dualExpiryData.shortTerm.optionsData.find(o => o.strike === longTermOption.strike);
+    if (!shortTermOption) return null;
+    
+    // 計算流動性權重
+    const spread = (shortTermOption.callAsk || 0) - (shortTermOption.callBid || 0) + (shortTermOption.putAsk || 0) - (shortTermOption.putBid || 0);
+    const avgPrice = (shortTermOption.callPrice + shortTermOption.putPrice) / 2;
+    const spreadRatio = spread / avgPrice;
+    const liquidityScore = 1 / (1 + spreadRatio);
+    
+    return {
+      strike: shortTermOption.strike,
+      callPrice: shortTermOption.callPrice,
+      putPrice: shortTermOption.putPrice,
+      impliedVol: shortTermOption.impliedVol,
+      expiry: shortTermOption.expiry,
+      atmDistance: Math.abs(shortTermOption.strike - spotPrice),
+      weight: liquidityScore
+    } as RawATMContract;
+  }).filter(contract => contract !== null) as RawATMContract[];
+  
+  const rawLongTermContracts: RawATMContract[] = sortedCommonStrikes.map(longTermOption => {
+    // 計算流動性權重
+    const spread = (longTermOption.callAsk || 0) - (longTermOption.callBid || 0) + (longTermOption.putAsk || 0) - (longTermOption.putBid || 0);
+    const avgPrice = (longTermOption.callPrice + longTermOption.putPrice) / 2;
+    const spreadRatio = spread / avgPrice;
+    const liquidityScore = 1 / (1 + spreadRatio);
+    
+    return {
+      strike: longTermOption.strike,
+      callPrice: longTermOption.callPrice,
+      putPrice: longTermOption.putPrice,
+      impliedVol: longTermOption.impliedVol,
+      expiry: longTermOption.expiry,
+      atmDistance: longTermOption.atmDistance,
+      weight: liquidityScore
+    } as RawATMContract;
+  });
+  
   // 計算最終結果
   const annualizedRate = (weightedCallDiscount * 365) / lockupDays;
   const fairValue = spotPrice - weightedCallPrice;
@@ -401,7 +441,9 @@ export function calculateDiscountFromDualExpiry(
     theoreticalCallPrice: weightedCallPrice,
     theoreticalPutPrice: weightedPutPrice,
     atmCalculations: calculations,
-    totalContracts: calculations.length
+    totalContracts: calculations.length,
+    rawShortTermContracts,
+    rawLongTermContracts
   };
 }
 

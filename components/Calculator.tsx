@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Token, LockupPeriod, PriceData, DiscountCalculation, OptionData, DebugInfo, CalculationStep, DataFetchStatus, ApiCallStatus } from '@/types';
+import { Token, LockupPeriod, PriceData, DiscountCalculation, OptionData, DebugInfo, CalculationStep, DataFetchStatus, ApiCallStatus, RawATMContract } from '@/types';
 import { lockupPeriodToDays, calculateDiscountFromOptions, validateOptionsData } from '@/lib/calculator';
 import DebugPanel from './DebugPanel';
 
@@ -315,6 +315,14 @@ export default function Calculator() {
     return `${value.toFixed(2)}%`;
   };
 
+  // 計算原始合約的折扣率 (簡化計算，僅用於顯示)
+  const calculateRawContractDiscount = (contract: RawATMContract, spotPrice: number) => {
+    // 簡化的折扣率計算：Call/Put價格除以現貨價格
+    const callDiscount = (contract.callPrice / spotPrice) * 100;
+    const putDiscount = (contract.putPrice / spotPrice) * 100;
+    return { callDiscount, putDiscount };
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
@@ -508,8 +516,83 @@ export default function Calculator() {
                 </div>
               )}
               
-              {/* ATM合約詳細信息 */}
-              {calculation.atmCalculations && calculation.atmCalculations.length > 0 && (
+              {/* ATM合約詳細信息 - 雙到期日原始市場數據 */}
+              {dualExpiryInfo && calculation.rawShortTermContracts && calculation.rawLongTermContracts && (
+                <div className="mt-4 pt-4 border-t border-blue-200">
+                  <h4 className="font-medium mb-3 text-sm">ATM合約明細 (原始市場數據)</h4>
+                  
+                  {/* 短期到期日合約 */}
+                  <div className="mb-4">
+                    <h5 className="font-medium mb-2 text-xs text-gray-700">短期到期日: {dualExpiryInfo.shortTermExpiry}</h5>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="border-b border-gray-200">
+                            <th className="text-left pb-1">執行價</th>
+                            <th className="text-right pb-1">距離</th>
+                            <th className="text-right pb-1">Call價格</th>
+                            <th className="text-right pb-1">Put價格</th>
+                            <th className="text-right pb-1">市場波動率</th>
+                            <th className="text-right pb-1">權重</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {calculation.rawShortTermContracts.map((contract, index) => {
+                            const discounts = calculateRawContractDiscount(contract, prices?.spot || 0);
+                            return (
+                              <tr key={index} className="border-b border-gray-100">
+                                <td className="py-1">${contract.strike.toLocaleString()}</td>
+                                <td className="text-right py-1">${contract.atmDistance.toFixed(0)}</td>
+                                <td className="text-right py-1">${contract.callPrice.toFixed(3)}</td>
+                                <td className="text-right py-1">${contract.putPrice.toFixed(3)}</td>
+                                <td className="text-right py-1 font-semibold text-indigo-600">{contract.impliedVol.toFixed(1)}%</td>
+                                <td className="text-right py-1">{contract.weight?.toFixed(3) || 'N/A'}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* 長期到期日合約 */}
+                  <div>
+                    <h5 className="font-medium mb-2 text-xs text-gray-700">長期到期日: {dualExpiryInfo.longTermExpiry}</h5>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="border-b border-gray-200">
+                            <th className="text-left pb-1">執行價</th>
+                            <th className="text-right pb-1">距離</th>
+                            <th className="text-right pb-1">Call價格</th>
+                            <th className="text-right pb-1">Put價格</th>
+                            <th className="text-right pb-1">市場波動率</th>
+                            <th className="text-right pb-1">權重</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {calculation.rawLongTermContracts.map((contract, index) => {
+                            const discounts = calculateRawContractDiscount(contract, prices?.spot || 0);
+                            return (
+                              <tr key={index} className="border-b border-gray-100">
+                                <td className="py-1">${contract.strike.toLocaleString()}</td>
+                                <td className="text-right py-1">${contract.atmDistance.toFixed(0)}</td>
+                                <td className="text-right py-1">${contract.callPrice.toFixed(3)}</td>
+                                <td className="text-right py-1">${contract.putPrice.toFixed(3)}</td>
+                                <td className="text-right py-1 font-semibold text-indigo-600">{contract.impliedVol.toFixed(1)}%</td>
+                                <td className="text-right py-1">{contract.weight?.toFixed(3) || 'N/A'}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 單一到期日ATM合約 (fallback) */}
+              {!dualExpiryInfo && calculation.atmCalculations && calculation.atmCalculations.length > 0 && (
                 <div className="mt-4 pt-4 border-t border-blue-200">
                   <h4 className="font-medium mb-3 text-sm">ATM合約明細</h4>
                   <div className="overflow-x-auto">
@@ -529,17 +612,7 @@ export default function Calculator() {
                         {calculation.atmCalculations.map((calc, index) => (
                           <tr key={index} className="border-b border-blue-50">
                             <td className="py-1">${calc.strike.toLocaleString()}</td>
-                            <td className="py-1 text-xs">
-                              {calc.shortTermExpiry && calc.longTermExpiry ? 
-                                <div>
-                                  <div>{calc.shortTermExpiry}→{calc.longTermExpiry}</div>
-                                  <div className="text-gray-500">
-                                    ({calc.shortTermIV?.toFixed(1)}%→{calc.longTermIV?.toFixed(1)}%)
-                                  </div>
-                                </div>
-                                : calc.expiry
-                              }
-                            </td>
+                            <td className="py-1">{calc.expiry}</td>
                             <td className="text-right py-1">${calc.atmDistance.toFixed(0)}</td>
                             <td className="text-right py-1 text-red-600">{calc.callDiscount.toFixed(2)}%</td>
                             <td className="text-right py-1 text-green-600">{calc.putDiscount.toFixed(2)}%</td>

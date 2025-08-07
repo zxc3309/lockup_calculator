@@ -25,6 +25,19 @@ export interface ATMCalculation {
   extrapolationStrategy?: ExtrapolationStrategy; // 外推策略
 }
 
+// 原始市場合約數據接口（用於顯示）
+export interface RawATMContract {
+  strike: number;
+  callPrice: number;
+  putPrice: number;
+  impliedVol: number;  // 原始市場波動率
+  expiry: string;
+  atmDistance: number;
+  callDiscount?: number;
+  putDiscount?: number;
+  weight?: number;
+}
+
 export enum ExtrapolationStrategy {
   INTERPOLATION = 'interpolation',           // 內插：目標在兩個期限之間
   EXTRAPOLATION = 'extrapolation',          // 外推：目標超出所有期限
@@ -62,6 +75,9 @@ export interface DiscountCalculation {
   // 多合約ATM計算詳細信息
   atmCalculations?: ATMCalculation[];
   totalContracts?: number;
+  // 雙到期日原始市場數據
+  rawShortTermContracts?: RawATMContract[];  // 短期到期日原始合約
+  rawLongTermContracts?: RawATMContract[];   // 長期到期日原始合約
 }
 
 export interface OptionData {
