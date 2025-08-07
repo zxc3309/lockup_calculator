@@ -1,13 +1,22 @@
 'use client';
 
 import { useState } from 'react';
-import { Token, LockupPeriod, PriceData, DiscountCalculation, OptionData, DebugInfo, CalculationStep, DataFetchStatus, ApiCallStatus, RawATMContract } from '@/types';
+import { Token, LockupPeriod, PriceData, DiscountCalculation, OptionData, DebugInfo, CalculationStep, DataFetchStatus, ApiCallStatus, RawATMContract, TokenCalculationMode, CustomTokenInput as CustomTokenInputType } from '@/types';
 import { lockupPeriodToDays, calculateDiscountFromOptions, validateOptionsData } from '@/lib/calculator';
 import DebugPanel from './DebugPanel';
 import CalculationFlow, { CALCULATION_STEPS_TEMPLATE } from './CalculationFlow';
 import DiscountResults from './DiscountResults';
+import HistoricalVolatilityResults from './HistoricalVolatilityResults';
+import TokenModeSelector from './TokenModeSelector';
+import CustomTokenInput from './CustomTokenInput';
 
 export default function Calculator() {
+  // 計算模式狀態
+  const [calculationMode, setCalculationMode] = useState<TokenCalculationMode>('market-data');
+  const [customTokenInput, setCustomTokenInput] = useState<CustomTokenInputType | null>(null);
+  const [customTokenApiResult, setCustomTokenApiResult] = useState<any>(null);
+  
+  // 原有狀態
   const [token, setToken] = useState<Token>('BTC');
   const [period, setPeriod] = useState<LockupPeriod>('6M');
   const [prices, setPrices] = useState<PriceData | null>(null);
@@ -48,6 +57,67 @@ export default function Calculator() {
         : step
     ));
     setCurrentStep(stepId);
+  };
+
+  // 自定義代幣計算
+  const calculateCustomToken = async () => {
+    if (!customTokenInput) {
+      alert('請完成代幣參數設定');
+      return;
+    }
+    
+    setLoading(true);
+    setCalculation(null);
+    
+    try {
+      console.log(`[Calculator] 🚀 開始計算自定義代幣: ${customTokenInput.symbol}`);
+      
+      const response = await fetch(
+        `/api/custom-token?tokenId=${customTokenInput.symbol}&period=${customTokenInput.period}&targetPrice=${customTokenInput.targetPrice}&debug=${debugMode}`
+      );
+      
+      if (!response.ok) {
+        throw new Error(`API 呼叫失敗: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.details || result.error || '計算失敗');
+      }
+      
+      console.log(`[Calculator] ✅ 自定義代幣計算完成:`, result.calculation);
+      
+      // 轉換成與原有 DiscountCalculation 兼容的格式
+      const customCalculation: DiscountCalculation = {
+        annualizedRate: result.calculation.annualizedRate,
+        fairValue: result.calculation.fairValue,
+        discount: result.calculation.callDiscountRate,
+        method: result.calculation.method,
+        callDiscount: result.calculation.callDiscountRate,
+        putDiscount: 0, // 自定義代幣模式只計算 Call
+        impliedVolatility: result.calculation.impliedVolatility,
+        theoreticalCallPrice: result.calculation.theoreticalCallPrice,
+        theoreticalPutPrice: 0, // 自定義代幣模式不計算 Put
+      };
+      
+      setCalculation(customCalculation);
+      setCustomTokenApiResult(result); // 保存完整的API結果
+      
+      // 設定虛擬價格數據以供結果顯示
+      setPrices({
+        token: 'BTC', // 佔位符
+        spot: result.calculation.currentPrice,
+        timestamp: new Date()
+      });
+      
+    } catch (error) {
+      console.error('[Calculator] ❌ 自定義代幣計算失敗:', error);
+      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+      alert(`計算失敗: ${errorMessage}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const updatePrices = async () => {
@@ -449,52 +519,80 @@ export default function Calculator() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
         <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
-          BTC/ETH 鎖倉Token折扣率計算器
+          鎖倉Token折扣率計算器
         </h1>
         
-        {/* Token Selection */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            選擇幣種
-          </label>
-          <div className="flex space-x-4">
-            {(['BTC', 'ETH'] as Token[]).map((t) => (
-              <button
-                key={t}
-                onClick={() => setToken(t)}
-                className={`px-6 py-2 rounded-md font-medium ${
-                  token === t
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Token Mode Selection */}
+        <TokenModeSelector 
+          selectedMode={calculationMode}
+          onModeChange={(mode) => {
+            setCalculationMode(mode);
+            // 清空之前的結果
+            setCalculation(null);
+            setPrices(null);
+            setOptionsData(null);
+            setDualExpiryInfo(null);
+          }}
+        />
+        
+        {/* Market Data Mode - BTC/ETH Selection */}
+        {calculationMode === 'market-data' && (
+          <>
+            {/* Token Selection */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                選擇幣種
+              </label>
+              <div className="flex space-x-4">
+                {(['BTC', 'ETH'] as Token[]).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setToken(t)}
+                    className={`px-6 py-2 rounded-md font-medium ${
+                      token === t
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-        {/* Period Selection */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            鎖倉期限
-          </label>
-          <div className="grid grid-cols-4 gap-2">
-            {(['3M', '6M', '1Y', '2Y'] as LockupPeriod[]).map((p) => (
-              <button
-                key={p}
-                onClick={() => setPeriod(p)}
-                className={`px-4 py-2 rounded-md font-medium text-sm ${
-                  period === p
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                {p === '1Y' ? '1年' : p === '2Y' ? '2年' : p}
-              </button>
-            ))}
+            {/* Period Selection */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                鎖倉期限
+              </label>
+              <div className="grid grid-cols-4 gap-2">
+                {(['3M', '6M', '1Y', '2Y'] as LockupPeriod[]).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPeriod(p)}
+                    className={`px-4 py-2 rounded-md font-medium text-sm ${
+                      period === p
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    {p === '1Y' ? '1年' : p === '2Y' ? '2年' : p}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+        
+        {/* Historical Volatility Mode - Custom Token Input */}
+        {calculationMode === 'historical-volatility' && (
+          <div className="mb-6">
+            <CustomTokenInput 
+              onInputChange={setCustomTokenInput}
+              loading={loading}
+            />
           </div>
-        </div>
+        )}
 
         {/* Debug Mode Toggle */}
         <div className="mb-4">
@@ -509,15 +607,25 @@ export default function Calculator() {
           </label>
         </div>
 
-        {/* Update Prices Button */}
+        {/* Calculate Button */}
         <div className="mb-6">
-          <button
-            onClick={updatePrices}
-            disabled={loading || optionsLoading}
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-md font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-          >
-            {loading ? '更新中...' : optionsLoading ? '獲取選擇權數據中...' : '更新價格與數據'}
-          </button>
+          {calculationMode === 'market-data' ? (
+            <button
+              onClick={updatePrices}
+              disabled={loading || optionsLoading}
+              className="w-full bg-blue-600 text-white py-3 px-4 rounded-md font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              {loading ? '更新中...' : optionsLoading ? '獲取選擇權數據中...' : '更新價格與數據'}
+            </button>
+          ) : (
+            <button
+              onClick={calculateCustomToken}
+              disabled={loading || !customTokenInput}
+              className="w-full bg-green-600 text-white py-3 px-4 rounded-md font-medium hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              {loading ? '計算中...' : '計算折扣率'}
+            </button>
+          )}
           
           {/* Loading Progress */}
           {(loading || optionsLoading) && debugInfo && (
@@ -573,13 +681,22 @@ export default function Calculator() {
         {/* Results */}
         {calculation && prices && (
           <div className="mb-6">
-            <DiscountResults
-              calculation={calculation}
-              spotPrice={prices.spot}
-              dualExpiryInfo={dualExpiryInfo}
-              token={token}
-              period={period}
-            />
+            {calculationMode === 'market-data' ? (
+              <DiscountResults
+                calculation={calculation}
+                spotPrice={prices.spot}
+                dualExpiryInfo={dualExpiryInfo}
+                token={token}
+                period={period}
+              />
+            ) : (
+              <HistoricalVolatilityResults
+                calculation={calculation}
+                spotPrice={prices.spot}
+                customTokenInput={customTokenInput!}
+                volatilityData={customTokenApiResult?.volatilityAnalysis}
+              />
+            )}
           </div>
         )}
 

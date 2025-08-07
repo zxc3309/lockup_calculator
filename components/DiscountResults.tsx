@@ -13,12 +13,29 @@ interface DiscountResultsProps {
 }
 
 const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
+  // For very small values, use more compact formatting
+  if (value < 1) {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 4,
+    }).format(value);
+  } else if (value < 100) {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  } else {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  }
 };
 
 const formatPercentage = (value: number) => {
@@ -183,6 +200,23 @@ export default function DiscountResults({
   const putDiscount = calculation.putDiscount || 0;
   const callTheoretical = calculation.theoreticalCallPrice || 0;
   const putTheoretical = calculation.theoreticalPutPrice || 0;
+  
+  // Calculate period-specific values for Put and Call
+  const periodDaysMap = {
+    '3M': 90,
+    '6M': 180,
+    '1Y': 365,
+    '2Y': 730
+  };
+  const lockupDays = periodDaysMap[period as keyof typeof periodDaysMap] || 365;
+  
+  // Calculate annualized rates for both Put and Call
+  const callAnnualizedRate = (callDiscount * 365) / lockupDays;
+  const putAnnualizedRate = (putDiscount * 365) / lockupDays;
+  
+  // Calculate fair values for both Put and Call
+  const callFairValue = spotPrice - callTheoretical;
+  const putFairValue = spotPrice - putTheoretical;
 
   return (
     <div className="space-y-6">
@@ -282,14 +316,14 @@ export default function DiscountResults({
           
           <div className="text-center p-4 bg-gray-50 rounded-lg">
             <div className="text-2xl font-bold text-gray-900">
-              {formatPercentage(calculation.annualizedRate)}
+              {formatPercentage(selectedDiscount === 'call' ? callAnnualizedRate : putAnnualizedRate)}
             </div>
             <div className="text-sm text-gray-600">年化折扣率</div>
           </div>
           
           <div className="text-center p-4 bg-gray-50 rounded-lg">
             <div className="text-2xl font-bold text-gray-900">
-              {formatCurrency(calculation.fairValue)}
+              {formatCurrency(selectedDiscount === 'call' ? callFairValue : putFairValue)}
             </div>
             <div className="text-sm text-gray-600">合理購買價格</div>
           </div>

@@ -1,0 +1,502 @@
+
+> btc-eth-lockup-calculator@0.1.0 dev
+> next dev
+
+   ▲ Next.js 14.1.0
+   - Local:        http://localhost:3000
+
+ ✓ Ready in 1609ms
+ ✓ Compiled /api/custom-token/price in 278ms (40 modules)
+[Price API] 🚀 獲取 ethereum 當前價格...
+🔄 Trying BINANCE API for ethereum current price...
+✅ Current ethereum price from BINANCE: $3,845.66
+[Price API] ✅ ethereum 價格: $3,845.66 (來源: BINANCE, 耗時: 158ms)
+ ○ Compiling / ...
+ ✓ Compiled / in 2.5s (486 modules)
+ ✓ Compiled in 90ms (246 modules)
+ ✓ Compiled /api/custom-token/price in 163ms (487 modules)
+ ⨯ Error: Cannot find module './638.js'
+Require stack:
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/app/api/custom-token/price/route.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/load-components.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/build/utils.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/dev/hot-middleware.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/dev/hot-reloader-webpack.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/router-server.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1369:15)
+    at /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)
+    at Module._load (node:internal/modules/cjs/loader:1179:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1449:12)
+    at mod.require (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at __webpack_require__.f.require (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js:198:28)
+    at /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js:162:22)
+    at /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/app/api/custom-token/price/route.js:3:99
+    at Object.<anonymous> (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/app/api/custom-token/price/route.js:3:144)
+    at Module._compile (node:internal/modules/cjs/loader:1692:14)
+    at Object..js (node:internal/modules/cjs/loader:1824:10)
+    at Module.load (node:internal/modules/cjs/loader:1427:32)
+    at Module._load (node:internal/modules/cjs/loader:1250:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1449:12)
+    at mod.require (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at requirePage (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require.js:109:84)
+    at /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/load-components.js:74:84
+    at async loadComponentsImpl (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/load-components.js:74:26)
+    at async DevServer.findPageComponentsImpl (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/next-server.js:675:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/app/api/custom-token/price/route.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/load-components.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/build/utils.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/dev/hot-middleware.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/dev/hot-reloader-webpack.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/router-server.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/start-server.js'
+  ],
+  page: '/api/custom-token/price'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 617ms (650 modules)
+ ⨯ Error: Cannot find module './638.js'
+Require stack:
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/pages/_document.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/load-components.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/build/utils.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/dev/hot-middleware.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/dev/hot-reloader-webpack.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/router-server.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1369:15)
+    at /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)
+    at Module._load (node:internal/modules/cjs/loader:1179:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1449:12)
+    at mod.require (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at __webpack_require__.f.require (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js:198:28)
+    at /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js:162:22)
+    at /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/app/api/custom-token/price/route.js:3:99
+    at Object.<anonymous> (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/app/api/custom-token/price/route.js:3:144)
+    at Module._compile (node:internal/modules/cjs/loader:1692:14)
+    at Object..js (node:internal/modules/cjs/loader:1824:10)
+    at Module.load (node:internal/modules/cjs/loader:1427:32)
+    at Module._load (node:internal/modules/cjs/loader:1250:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1449:12)
+    at mod.require (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at requirePage (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require.js:109:84)
+    at /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/load-components.js:74:84
+    at async loadComponentsImpl (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/load-components.js:74:26)
+    at async DevServer.findPageComponentsImpl (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/next-server.js:675:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/pages/_document.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/load-components.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/build/utils.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/dev/hot-middleware.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/dev/hot-reloader-webpack.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/router-server.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/start-server.js'
+  ],
+  page: '/api/custom-token/price'
+}
+ ⨯ Error: Cannot find module './638.js'
+Require stack:
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/pages/_document.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/load-components.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/build/utils.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/dev/hot-middleware.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/dev/hot-reloader-webpack.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/router-server.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1369:15)
+    at /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)
+    at Module._load (node:internal/modules/cjs/loader:1179:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1449:12)
+    at mod.require (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at __webpack_require__.f.require (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js:198:28)
+    at /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js:162:22)
+    at /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/app/api/custom-token/price/route.js:3:99
+    at Object.<anonymous> (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/app/api/custom-token/price/route.js:3:144)
+    at Module._compile (node:internal/modules/cjs/loader:1692:14)
+    at Object..js (node:internal/modules/cjs/loader:1824:10)
+    at Module.load (node:internal/modules/cjs/loader:1427:32)
+    at Module._load (node:internal/modules/cjs/loader:1250:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1449:12)
+    at mod.require (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at requirePage (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require.js:109:84)
+    at /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/load-components.js:74:84
+    at async loadComponentsImpl (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/load-components.js:74:26)
+    at async DevServer.findPageComponentsImpl (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/next-server.js:675:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/pages/_document.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/load-components.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/build/utils.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/dev/hot-middleware.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/dev/hot-reloader-webpack.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/router-server.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/start-server.js'
+  ],
+  page: '/api/custom-token/price'
+}
+ ✓ Compiled /api/prices in 160ms (298 modules)
+[API] Fetching prices for BTC
+[API] Prices fetch completed in 137ms for BTC at $116348
+ ✓ Compiled /api/options in 81ms (303 modules)
+[API] 🚀 開始獲取 BTC 3M 選擇權數據，現貨價格: $116,348
+[API] 📊 Phase 1: 嘗試雙到期日方差外推法...
+Total instruments available: 760
+=== 雙到期日選擇邏輯 ===
+目標日期: Fri Nov 07 2025
+可用到期日: 10AUG25(Sun Aug 10 2025), 15AUG25(Fri Aug 15 2025), 22AUG25(Fri Aug 22 2025), 29AUG25(Fri Aug 29 2025), 26SEP25(Fri Sep 26 2025), 31OCT25(Fri Oct 31 2025), 26DEC25(Fri Dec 26 2025), 27MAR26(Fri Mar 27 2026), 26JUN26(Fri Jun 26 2026)
+邊界檢查: 首個=10AUG25(Sun Aug 10 2025), 末個=26JUN26(Fri Jun 26 2026)
+檢查內插: Fri Nov 07 2025 是否在 Sun Aug 10 2025 和 Fri Aug 15 2025 之間
+檢查內插: Fri Nov 07 2025 是否在 Fri Aug 15 2025 和 Fri Aug 22 2025 之間
+檢查內插: Fri Nov 07 2025 是否在 Fri Aug 22 2025 和 Fri Aug 29 2025 之間
+檢查內插: Fri Nov 07 2025 是否在 Fri Aug 29 2025 和 Fri Sep 26 2025 之間
+檢查內插: Fri Nov 07 2025 是否在 Fri Sep 26 2025 和 Fri Oct 31 2025 之間
+檢查內插: Fri Nov 07 2025 是否在 Fri Oct 31 2025 和 Fri Dec 26 2025 之間
+✅ 策略: INTERPOLATION between 31OCT25 and 26DEC25
+Short term (31OCT25): 68 instruments
+Long term (26DEC25): 40 instruments
+Raw API response for BTC-31OCT25-60000-C: [
+  {
+    "high": null,
+    "low": null,
+    "last": 0.491,
+    "instrument_name": "BTC-31OCT25-60000-C",
+    "bid_price": 0.4925,
+    "ask_price": 0.4955,
+    "open_interest": 15,
+    "mark_price": 0.49398802,
+    "creation_timestamp": 1754570834317,
+    "price_change": null,
+    "interest_rate": 0,
+    "volume": 0,
+    "mark_iv": 64.87,
+    "underlying_price": 118300.87384615385,
+    "underlying_index": "SYN.BTC-31OCT25",
+    "estimated_delivery_price": 116214.63,
+    "base_currency": "BTC",
+    "quote_currency": "BTC",
+    "volume_usd": 0,
+    "mid_price": 0.494
+  }
+]
+Raw API response for BTC-31OCT25-160000-C: [
+  {
+    "high": 0.0075,
+    "low": 0.0065,
+    "last": 0.0075,
+    "instrument_name": "BTC-31OCT25-160000-C",
+    "bid_price": 0.0075,
+    "ask_price": 0.008,
+    "open_interest": 158.8,
+    "mark_price": 0.00778255,
+    "creation_timestamp": 1754570841607,
+    "price_change": 7.1429,
+    "interest_rate": 0,
+    "volume": 5.5,
+    "mark_iv": 43.01,
+    "underlying_price": 118321.51461538461,
+    "underlying_index": "SYN.BTC-31OCT25",
+    "estimated_delivery_price": 116235.82,
+    "base_currency": "BTC",
+    "quote_currency": "BTC",
+    "volume_usd": 4450.97,
+    "mid_price": 0.00775
+  }
+]
+Raw API response for BTC-26DEC25-60000-C: [
+  {
+    "high": null,
+    "low": null,
+    "last": 0.5,
+    "instrument_name": "BTC-26DEC25-60000-C",
+    "bid_price": 0.5005,
+    "ask_price": 0.503,
+    "open_interest": 5,
+    "mark_price": 0.50182279,
+    "creation_timestamp": 1754570842494,
+    "price_change": null,
+    "interest_rate": 0,
+    "volume": 0,
+    "mark_iv": 58.3,
+    "underlying_price": 119784.29,
+    "underlying_index": "BTC-26DEC25",
+    "estimated_delivery_price": 116235.82,
+    "base_currency": "BTC",
+    "quote_currency": "BTC",
+    "volume_usd": 0,
+    "mid_price": 0.50175
+  }
+]
+Raw API response for BTC-26DEC25-160000-C: [
+  {
+    "high": 0.0245,
+    "low": 0.022,
+    "last": 0.0245,
+    "instrument_name": "BTC-26DEC25-160000-C",
+    "bid_price": 0.024,
+    "ask_price": 0.025,
+    "open_interest": 2731.3,
+    "mark_price": 0.02430763,
+    "creation_timestamp": 1754570846053,
+    "price_change": 6.5217,
+    "interest_rate": 0,
+    "volume": 10.8,
+    "mark_iv": 44.6,
+    "underlying_price": 119783.97,
+    "underlying_index": "BTC-26DEC25",
+    "estimated_delivery_price": 116235.5,
+    "base_currency": "BTC",
+    "quote_currency": "BTC",
+    "volume_usd": 29406.55,
+    "mid_price": 0.0245
+  }
+]
+[API] ✅ 雙到期日數據獲取成功
+[API] 📈 雙到期日策略: interpolation
+[API] 📈 短期: 31OCT25 (34個合約)
+[API] 📈 長期: 26DEC25 (20個合約)
+[API] 📈 目標時間: 0.252年
+[API] 🧮 Phase 2: 執行雙到期日折扣率計算...
+=== 雙到期日折扣率計算 ===
+短期: 31OCT25 (0.231年, IV=42.1%)
+長期: 26DEC25 (0.384年, IV=46.2%)
+目標: 0.252年, 策略: interpolation
+找到 5 個共同的ATM執行價格
+=== 波動率外推計算 ===
+短期: 0.231年, IV=42.1%
+長期: 0.384年, IV=46.2%
+目標: 0.252年, 策略: interpolation
+短期方差: 0.040807, 長期方差: 0.081947
+📊 內插計算: 內插因子: 0.1405, 內插方差: 0.046586
+✅ 最終結果:
+   目標方差: 0.046586
+   目標波動率: 43.0% (小數: 0.4299)
+   計算詳情: 內插因子: 0.1405, 內插方差: 0.046586
+Strike 120000: 短期IV=42.1%, 長期IV=46.2%, 外推IV=43.0%
+=== 波動率外推計算 ===
+短期: 0.231年, IV=42.1%
+長期: 0.384年, IV=46.2%
+目標: 0.252年, 策略: interpolation
+短期方差: 0.040807, 長期方差: 0.081947
+📊 內插計算: 內插因子: 0.1405, 內插方差: 0.046586
+✅ 最終結果:
+   目標方差: 0.046586
+   目標波動率: 43.0% (小數: 0.4299)
+   計算詳情: 內插因子: 0.1405, 內插方差: 0.046586
+Strike 110000: 短期IV=42.1%, 長期IV=46.2%, 外推IV=43.0%
+=== 波動率外推計算 ===
+短期: 0.231年, IV=42.1%
+長期: 0.384年, IV=46.2%
+目標: 0.252年, 策略: interpolation
+短期方差: 0.040807, 長期方差: 0.081947
+📊 內插計算: 內插因子: 0.1405, 內插方差: 0.046586
+✅ 最終結果:
+   目標方差: 0.046586
+   目標波動率: 43.0% (小數: 0.4299)
+   計算詳情: 內插因子: 0.1405, 內插方差: 0.046586
+Strike 105000: 短期IV=42.1%, 長期IV=46.2%, 外推IV=43.0%
+=== 波動率外推計算 ===
+短期: 0.231年, IV=42.1%
+長期: 0.384年, IV=46.2%
+目標: 0.252年, 策略: interpolation
+短期方差: 0.040807, 長期方差: 0.081947
+📊 內插計算: 內插因子: 0.1405, 內插方差: 0.046586
+✅ 最終結果:
+   目標方差: 0.046586
+   目標波動率: 43.0% (小數: 0.4299)
+   計算詳情: 內插因子: 0.1405, 內插方差: 0.046586
+Strike 130000: 短期IV=42.1%, 長期IV=46.2%, 外推IV=43.0%
+=== 波動率外推計算 ===
+短期: 0.231年, IV=42.1%
+長期: 0.384年, IV=46.2%
+目標: 0.252年, 策略: interpolation
+短期方差: 0.040807, 長期方差: 0.081947
+📊 內插計算: 內插因子: 0.1405, 內插方差: 0.046586
+✅ 最終結果:
+   目標方差: 0.046586
+   目標波動率: 43.0% (小數: 0.4299)
+   計算詳情: 內插因子: 0.1405, 內插方差: 0.046586
+Strike 100000: 短期IV=42.1%, 長期IV=46.2%, 外推IV=43.0%
+=== 雙到期日計算結果 ===
+加權Call折扣: 11.00%
+加權Put折扣: 7.67%
+年化折扣率: 44.62%
+合理購買價格: $103,546.171
+[API] ✅ 雙到期日計算成功!
+[API] 💰 Call折扣: 11.00%
+[API] 💰 Put折扣: 7.67%
+[API] 📊 外推波動率: 43.0%
+[API] Options data fetch completed in 13159ms, found 20 contracts
+ ⨯ Error: Cannot find module './638.js'
+Require stack:
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/app/api/options/route.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/load-components.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/build/utils.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/dev/hot-middleware.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/dev/hot-reloader-webpack.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/router-server.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1369:15)
+    at /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)
+    at Module._load (node:internal/modules/cjs/loader:1179:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1449:12)
+    at mod.require (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at __webpack_require__.f.require (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js:198:28)
+    at /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js:162:22)
+    at /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/app/api/custom-token/price/route.js:3:99
+    at Object.<anonymous> (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/app/api/custom-token/price/route.js:3:144)
+    at Module._compile (node:internal/modules/cjs/loader:1692:14)
+    at Object..js (node:internal/modules/cjs/loader:1824:10)
+    at Module.load (node:internal/modules/cjs/loader:1427:32)
+    at Module._load (node:internal/modules/cjs/loader:1250:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1449:12)
+    at mod.require (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at requirePage (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require.js:109:84)
+    at /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/load-components.js:74:84
+    at async loadComponentsImpl (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/load-components.js:74:26)
+    at async DevServer.findPageComponentsImpl (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/next-server.js:675:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/app/api/options/route.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/load-components.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/build/utils.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/dev/hot-middleware.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/dev/hot-reloader-webpack.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/router-server.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/start-server.js'
+  ],
+  page: '/api/custom-token/price'
+}
+ ⨯ Error: Cannot find module './638.js'
+Require stack:
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/app/api/options/route.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/load-components.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/build/utils.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/dev/hot-middleware.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/dev/hot-reloader-webpack.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/router-server.js
+- /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1369:15)
+    at /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)
+    at Module._load (node:internal/modules/cjs/loader:1179:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1449:12)
+    at mod.require (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at __webpack_require__.f.require (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js:198:28)
+    at /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js:162:22)
+    at /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/app/api/custom-token/price/route.js:3:99
+    at Object.<anonymous> (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/app/api/custom-token/price/route.js:3:144)
+    at Module._compile (node:internal/modules/cjs/loader:1692:14)
+    at Object..js (node:internal/modules/cjs/loader:1824:10)
+    at Module.load (node:internal/modules/cjs/loader:1427:32)
+    at Module._load (node:internal/modules/cjs/loader:1250:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1449:12)
+    at mod.require (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at requirePage (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require.js:109:84)
+    at /Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/load-components.js:74:84
+    at async loadComponentsImpl (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/load-components.js:74:26)
+    at async DevServer.findPageComponentsImpl (/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/next-server.js:675:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/webpack-runtime.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/.next/server/app/api/options/route.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/require.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/load-components.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/build/utils.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/dev/hot-middleware.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/dev/hot-reloader-webpack.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/router-server.js',
+    '/Users/weilinchen/Documents/Discount Rate Analysis for locked token/btc-eth-lockup-calculator/node_modules/next/dist/server/lib/start-server.js'
+  ],
+  page: '/api/custom-token/price'
+}
+[?25h

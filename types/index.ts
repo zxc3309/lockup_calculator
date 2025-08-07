@@ -1,6 +1,16 @@
 export type Token = 'BTC' | 'ETH';
 export type LockupPeriod = '3M' | '6M' | '1Y' | '2Y';
 
+// Token calculation modes
+export type TokenCalculationMode = 'market-data' | 'historical-volatility';
+
+// Custom token input for historical volatility mode
+export interface CustomTokenInput {
+  symbol: string;
+  targetPrice: number;
+  period: LockupPeriod;
+}
+
 export interface PriceData {
   token: Token;
   spot: number;
