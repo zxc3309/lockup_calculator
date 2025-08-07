@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchOptionsChain, fetchDualExpiryOptionsData } from '@/lib/optionsService';
-import { calculateDiscountFromDualExpiry } from '@/lib/calculator';
+import { calculateDiscountFromDualExpiry, lockupPeriodToDays } from '@/lib/calculator';
+import { getTreasuryRateServer } from '@/lib/treasuryRates';
 import { Token, LockupPeriod } from '@/types';
 
 // Force this route to be dynamic
@@ -100,19 +101,34 @@ export async function GET(request: NextRequest) {
       console.log(`[API] 🧮 Phase 2: 執行雙到期日折扣率計算...`);
       
       try {
-        const lockupDays = period === '3M' ? 90 : period === '6M' ? 180 : period === '1Y' ? 365 : 730;
+        const lockupDays = lockupPeriodToDays(period);
+        
+        // Get treasury rate based on period
+        const treasuryPeriodMap: Record<LockupPeriod, '3M' | '6M' | '1Y' | '2Y'> = {
+          '3M': '3M',
+          '6M': '6M', 
+          '1Y': '1Y',
+          '2Y': '2Y'
+        };
+        
+        const treasuryPeriod = treasuryPeriodMap[period];
+        const riskFreeRate = await getTreasuryRateServer(treasuryPeriod);
+        
+        console.log(`[API] 💰 Using ${treasuryPeriod} treasury rate: ${(riskFreeRate * 100).toFixed(2)}%`);
         
         debugLog.push({
           step: 'dual_expiry_calculation_start',
           timestamp: Date.now(),
           phase: 2,
           lockup_days: lockupDays,
+          risk_free_rate: riskFreeRate,
+          treasury_period: treasuryPeriod,
           strategy: dualExpiryData.strategy,
           short_term_expiry: dualExpiryData.shortTerm.expiry,
           long_term_expiry: dualExpiryData.longTerm.expiry
         });
         
-        dualExpiryCalculation = calculateDiscountFromDualExpiry(dualExpiryData, spotPrice, lockupDays);
+        dualExpiryCalculation = calculateDiscountFromDualExpiry(dualExpiryData, spotPrice, lockupDays, riskFreeRate);
         calculationMethod = 'dual_expiry_variance_extrapolation';
         
         // 使用長期合約作為展示數據

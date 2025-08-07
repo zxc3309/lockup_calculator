@@ -1,15 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowTrendingUpIcon, ShieldCheckIcon, InformationCircleIcon, ChartBarIcon } from '@heroicons/react/24/outline';
-import { DiscountCalculation, RawATMContract } from '@/types';
+import { DiscountCalculation, RawATMContract, LockupPeriod } from '@/types';
+import { getTreasuryRateInfo } from '@/lib/treasuryRates';
 
 interface DiscountResultsProps {
   calculation: DiscountCalculation;
   spotPrice: number;
   dualExpiryInfo?: any;
   token: string;
-  period: string;
+  period: LockupPeriod;
 }
 
 const formatCurrency = (value: number) => {
@@ -195,11 +196,34 @@ export default function DiscountResults({
 }: DiscountResultsProps) {
   const [selectedDiscount, setSelectedDiscount] = useState<'call' | 'put'>('call');
   const [showDetails, setShowDetails] = useState(false);
+  const [treasuryRateInfo, setTreasuryRateInfo] = useState<{
+    displayText: string;
+    source: string;
+    rate: number;
+  } | null>(null);
 
   const callDiscount = calculation.callDiscount || 0;
   const putDiscount = calculation.putDiscount || 0;
   const callTheoretical = calculation.theoreticalCallPrice || 0;
   const putTheoretical = calculation.theoreticalPutPrice || 0;
+
+  // Fetch treasury rate info for display
+  useEffect(() => {
+    const fetchTreasuryInfo = async () => {
+      try {
+        const info = await getTreasuryRateInfo(period);
+        setTreasuryRateInfo({
+          displayText: info.displayText,
+          source: info.source,
+          rate: info.rate
+        });
+      } catch (error) {
+        console.warn('Failed to fetch treasury rate info:', error);
+      }
+    };
+    
+    fetchTreasuryInfo();
+  }, [period]);
   
   // Calculate period-specific values for Put and Call
   const periodDaysMap = {
@@ -266,6 +290,33 @@ export default function DiscountResults({
           <div className="mt-4 pt-3 border-t border-blue-200">
             <span className="text-blue-700 font-medium text-sm">外推隱含波動率: </span>
             <span className="text-blue-900 font-bold text-lg">{calculation.impliedVolatility?.toFixed(1)}%</span>
+          </div>
+          {treasuryRateInfo && (
+            <div className="mt-2">
+              <span className="text-blue-700 font-medium text-sm">無風險利率: </span>
+              <span className="text-blue-900 font-semibold">{treasuryRateInfo.displayText}</span>
+              {treasuryRateInfo.source === 'FALLBACK' && (
+                <span className="ml-1 text-orange-600 text-xs">⚠️ 預設值</span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 無風險利率信息 (單一到期日時顯示) */}
+      {!dualExpiryInfo && treasuryRateInfo && (
+        <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <InformationCircleIcon className="w-5 h-5 mr-2 text-gray-600" />
+              <span className="text-gray-700 font-medium text-sm">計算基準利率</span>
+            </div>
+            <div className="text-right">
+              <span className="text-gray-900 font-semibold">{treasuryRateInfo.displayText}</span>
+              {treasuryRateInfo.source === 'FALLBACK' && (
+                <span className="ml-2 text-orange-600 text-xs">⚠️ 預設值</span>
+              )}
+            </div>
           </div>
         </div>
       )}

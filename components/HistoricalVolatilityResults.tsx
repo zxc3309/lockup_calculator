@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowTrendingUpIcon, InformationCircleIcon, ChartBarIcon } from '@heroicons/react/24/outline';
-import { DiscountCalculation, CustomTokenInput } from '@/types';
+import { DiscountCalculation, CustomTokenInput, LockupPeriod } from '@/types';
+import { getTreasuryRateInfo } from '@/lib/treasuryRates';
 
 interface HistoricalVolatilityResultsProps {
   calculation: DiscountCalculation;
@@ -48,9 +49,32 @@ export default function HistoricalVolatilityResults({
   volatilityData
 }: HistoricalVolatilityResultsProps) {
   const [showCalculationDetails, setShowCalculationDetails] = useState(false);
+  const [treasuryRateInfo, setTreasuryRateInfo] = useState<{
+    displayText: string;
+    source: string;
+    rate: number;
+  } | null>(null);
 
   const callDiscount = calculation.callDiscount || 0;
   const callTheoretical = calculation.theoreticalCallPrice || 0;
+
+  // Fetch treasury rate info for display
+  useEffect(() => {
+    const fetchTreasuryInfo = async () => {
+      try {
+        const info = await getTreasuryRateInfo(customTokenInput.period as LockupPeriod);
+        setTreasuryRateInfo({
+          displayText: info.displayText,
+          source: info.source,
+          rate: info.rate
+        });
+      } catch (error) {
+        console.warn('Failed to fetch treasury rate info:', error);
+      }
+    };
+    
+    fetchTreasuryInfo();
+  }, [customTokenInput.period]);
   
   // Calculate period-specific values
   const periodDaysMap = {
@@ -110,6 +134,15 @@ export default function HistoricalVolatilityResults({
             </p>
           </div>
         </div>
+        {treasuryRateInfo && (
+          <div className="mt-4 pt-3 border-t border-purple-200">
+            <span className="text-purple-700 font-medium text-sm">無風險利率: </span>
+            <span className="text-purple-900 font-semibold">{treasuryRateInfo.displayText}</span>
+            {treasuryRateInfo.source === 'FALLBACK' && (
+              <span className="ml-2 text-orange-600 text-xs">⚠️ 預設值</span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Call 折扣率主卡片 */}

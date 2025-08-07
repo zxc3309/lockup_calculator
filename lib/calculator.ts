@@ -83,7 +83,7 @@ export function calculateImpliedForward(
   callPrice: number,
   putPrice: number,
   strike: number,
-  riskFreeRate: number = 0.05,
+  riskFreeRate: number, // Remove default value - must be provided
   timeToExpiry: number
 ): number {
   // Put-Call Parity: Forward = Strike + e^(r×T) × (Call - Put)
@@ -143,7 +143,7 @@ export function calculateDiscountFromOptions(
   optionsData: OptionData[],
   spotPrice: number,
   lockupDays: number,
-  riskFreeRate: number = 0.02
+  riskFreeRate: number // Remove default value - must be provided
 ): DiscountCalculation {
   if (optionsData.length === 0) {
     throw new Error('No options data available');
@@ -284,7 +284,7 @@ export function calculateDiscountFromDualExpiry(
   dualExpiryData: DualExpiryData,
   spotPrice: number,
   lockupDays: number,
-  riskFreeRate: number = 0.02
+  riskFreeRate: number // Remove default value - must be provided
 ): DiscountCalculation {
   const targetTimeToExpiry = dualExpiryData.targetTimeToExpiry;
   

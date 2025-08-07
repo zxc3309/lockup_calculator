@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchHistoricalPrices, calculateHistoricalVolatility, getCurrentPrice } from '@/lib/historicalVolatility';
 import { lockupPeriodToDays } from '@/lib/calculator';
+import { getTreasuryRateServer } from '@/lib/treasuryRates';
 import { LockupPeriod } from '@/types';
 
 // Force this route to be dynamic
@@ -137,7 +138,19 @@ export async function GET(request: NextRequest) {
     
     const lockupDays = lockupPeriodToDays(period);
     const timeToExpiry = lockupDays / 365; // Convert to years
-    const riskFreeRate = 0.02; // 2% risk-free rate
+    
+    // Get dynamic treasury rate based on lockup period
+    const treasuryPeriodMap: Record<LockupPeriod, '3M' | '6M' | '1Y' | '2Y'> = {
+      '3M': '3M',
+      '6M': '6M', 
+      '1Y': '1Y',
+      '2Y': '2Y'
+    };
+    
+    const treasuryPeriod = treasuryPeriodMap[period];
+    const riskFreeRate = await getTreasuryRateServer(treasuryPeriod);
+    
+    console.log(`[Custom Token API] 💰 Using ${treasuryPeriod} treasury rate: ${(riskFreeRate * 100).toFixed(2)}%`);
     
     const calculationStartTime = Date.now();
     

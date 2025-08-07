@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Token, LockupPeriod, PriceData, DiscountCalculation, OptionData, DebugInfo, CalculationStep, DataFetchStatus, ApiCallStatus, RawATMContract, TokenCalculationMode, CustomTokenInput as CustomTokenInputType } from '@/types';
 import { lockupPeriodToDays, calculateDiscountFromOptions, validateOptionsData } from '@/lib/calculator';
+import { getTreasuryRateForPeriod } from '@/lib/treasuryRates';
 import DebugPanel from './DebugPanel';
 import CalculationFlow, { CALCULATION_STEPS_TEMPLATE } from './CalculationFlow';
 import DiscountResults from './DiscountResults';
@@ -135,7 +136,11 @@ export default function Calculator() {
     // 初始化調試信息
     const startTime = Date.now();
     const lockupDays = lockupPeriodToDays(period);
-    const riskFreeRate = 0.05;
+    
+    // Get dynamic treasury rate based on period
+    const riskFreeRate = await getTreasuryRateForPeriod(period);
+    console.log(`[Calculator] 💰 Using ${period} treasury rate: ${(riskFreeRate * 100).toFixed(2)}%`);
+    
     const timeToExpiry = lockupDays / 365;
     
     const debugInfo: DebugInfo = {
