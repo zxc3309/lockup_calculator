@@ -1,8 +1,8 @@
 import { Token, OptionData, LockupPeriod, DualExpiryData, ExtrapolationStrategy } from '@/types';
 
 const DERIBIT_API = 'https://www.deribit.com/api/v2';
-const CLIENT_ID = 'E34lksyJ';
-const CLIENT_SECRET = 'jzn_lJXmLNV6pKZp1y1bYRqXoTa_l5cCSOIDd1P_VQ4';
+const CLIENT_ID = process.env.DERIBIT_CLIENT_ID || 'E34lksyJ';
+const CLIENT_SECRET = process.env.DERIBIT_CLIENT_SECRET || 'jzn_lJXmLNV6pKZp1y1bYRqXoTa_l5cCSOIDd1P_VQ4';
 
 // Access token cache
 let accessToken: string | null = null;

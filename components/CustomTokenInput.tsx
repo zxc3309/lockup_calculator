@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { LockupPeriod, CustomTokenInput as CustomTokenInputType } from '@/types';
 
 interface CustomTokenInputProps {
-  onInputChange: (input: CustomTokenInputType) => void;
+  onInputChange: (input: CustomTokenInputType & { volatilityMethod?: 'historical' | 'btc-implied' }) => void;
   loading?: boolean;
 }
 
@@ -12,6 +12,7 @@ export default function CustomTokenInput({ onInputChange, loading = false }: Cus
   const [symbol, setSymbol] = useState('');
   const [targetPrice, setTargetPrice] = useState('');
   const [period, setPeriod] = useState<LockupPeriod>('1Y');
+  const [volatilityMethod, setVolatilityMethod] = useState<'historical' | 'btc-implied'>('historical');
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   const [priceLoading, setPriceLoading] = useState(false);
   const [priceError, setPriceError] = useState<string | null>(null);
@@ -87,10 +88,11 @@ export default function CustomTokenInput({ onInputChange, loading = false }: Cus
       onInputChange({
         symbol: tokenId,
         targetPrice: parseFloat(targetPrice),
-        period
+        period,
+        volatilityMethod
       });
     }
-  }, [symbol, targetPrice, period, onInputChange]);
+  }, [symbol, targetPrice, period, volatilityMethod, onInputChange]);
 
   const targetPriceNum = parseFloat(targetPrice);
   const multiplier = currentPrice && targetPriceNum ? (targetPriceNum / currentPrice) : null;
@@ -156,6 +158,54 @@ export default function CustomTokenInput({ onInputChange, loading = false }: Cus
               {p === '1Y' ? '1年' : p === '2Y' ? '2年' : p}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Volatility Calculation Method */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          波動率計算方法
+        </label>
+        <div className="space-y-2">
+          <label className="flex items-center">
+            <input
+              type="radio"
+              name="volatilityMethod"
+              value="historical"
+              checked={volatilityMethod === 'historical'}
+              onChange={(e) => setVolatilityMethod(e.target.value as 'historical' | 'btc-implied')}
+              disabled={loading}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+            />
+            <span className="ml-2 text-sm text-gray-900">
+              📈 歷史波動率
+              <span className="text-gray-500 ml-1">(90天歷史數據計算)</span>
+            </span>
+          </label>
+          
+          <label className="flex items-center">
+            <input
+              type="radio"
+              name="volatilityMethod"
+              value="btc-implied"
+              checked={volatilityMethod === 'btc-implied'}
+              onChange={(e) => setVolatilityMethod(e.target.value as 'historical' | 'btc-implied')}
+              disabled={loading}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+            />
+            <span className="ml-2 text-sm text-gray-900">
+              🚀 BTC隱含波動率推導
+              <span className="text-gray-500 ml-1">(BTC選擇權市場 × Beta係數)</span>
+            </span>
+          </label>
+        </div>
+        
+        <div className="mt-2 text-xs text-gray-500">
+          {volatilityMethod === 'historical' ? (
+            '💡 基於歷史價格波動計算，反映過去市場行為'
+          ) : (
+            '💡 整合BTC選擇權市場預期，通過Beta係數推導小幣隱含波動率'
+          )}
         </div>
       </div>
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchHistoricalPrices, calculateHistoricalVolatility, getCurrentPrice } from '@/lib/historicalVolatility';
 import { lockupPeriodToDays } from '@/lib/calculator';
 import { getTreasuryRateServer } from '@/lib/treasuryRates';
+import { deriveAltcoinImpliedVolatility, BtcImpliedVolDerivation } from '@/lib/betaCalculator';
 import { LockupPeriod } from '@/types';
 
 // Force this route to be dynamic

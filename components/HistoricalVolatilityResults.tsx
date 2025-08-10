@@ -264,7 +264,7 @@ export default function HistoricalVolatilityResults({
                   </div>
                   <div className="flex justify-between p-3 bg-gray-50 rounded">
                     <span className="text-gray-600">r (無風險利率):</span>
-                    <span className="font-medium">2.0%</span>
+                    <span className="font-medium">{treasuryRateInfo ? (treasuryRateInfo.rate * 100).toFixed(2) + '%' : '載入中...'}</span>
                   </div>
                   <div className="flex justify-between p-3 bg-green-50 rounded border border-green-200">
                     <span className="text-gray-600">Call期權價格:</span>

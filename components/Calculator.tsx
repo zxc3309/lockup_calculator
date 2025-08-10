@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Token, LockupPeriod, PriceData, DiscountCalculation, OptionData, DebugInfo, CalculationStep, DataFetchStatus, ApiCallStatus, RawATMContract, TokenCalculationMode, CustomTokenInput as CustomTokenInputType } from '@/types';
+import { Token, LockupPeriod, PriceData, DiscountCalculation, OptionData, CalculationStep, RawATMContract, TokenCalculationMode, CustomTokenInput as CustomTokenInputType } from '@/types';
 import { lockupPeriodToDays, calculateDiscountFromOptions, validateOptionsData } from '@/lib/calculator';
 import { getTreasuryRateForPeriod } from '@/lib/treasuryRates';
-import DebugPanel from './DebugPanel';
 import CalculationFlow, { CALCULATION_STEPS_TEMPLATE } from './CalculationFlow';
 import DiscountResults from './DiscountResults';
 import HistoricalVolatilityResults from './HistoricalVolatilityResults';
+import BetaImpliedVolatilityResults from './BetaImpliedVolatilityResults';
 import TokenModeSelector from './TokenModeSelector';
 import CustomTokenInput from './CustomTokenInput';
 
@@ -16,6 +16,10 @@ export default function Calculator() {
   const [calculationMode, setCalculationMode] = useState<TokenCalculationMode>('market-data');
   const [customTokenInput, setCustomTokenInput] = useState<CustomTokenInputType | null>(null);
   const [customTokenApiResult, setCustomTokenApiResult] = useState<any>(null);
+  
+  // Beta分析相關狀態
+  const [betaAnalysisResult, setBetaAnalysisResult] = useState<any>(null);
+  const [historicalCalculation, setHistoricalCalculation] = useState<DiscountCalculation | null>(null);
   
   // 原有狀態
   const [token, setToken] = useState<Token>('BTC');
@@ -27,10 +31,6 @@ export default function Calculator() {
   const [optionsLoading, setOptionsLoading] = useState(false);
   const [dualExpiryInfo, setDualExpiryInfo] = useState<any>(null);
   
-  // 調試相關狀態
-  const [debugMode, setDebugMode] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
-  const [debugPanelOpen, setDebugPanelOpen] = useState(false);
 
   // 新的UI狀態
   const [calculationSteps, setCalculationSteps] = useState<CalculationStep[]>([]);
@@ -69,48 +69,21 @@ export default function Calculator() {
     
     setLoading(true);
     setCalculation(null);
+    setBetaAnalysisResult(null);
+    setHistoricalCalculation(null);
+    
+    const volatilityMethod = (customTokenInput as any).volatilityMethod || 'historical';
     
     try {
-      console.log(`[Calculator] 🚀 開始計算自定義代幣: ${customTokenInput.symbol}`);
+      console.log(`[Calculator] 🚀 開始計算自定義代幣: ${customTokenInput.symbol} (方法: ${volatilityMethod})`);
       
-      const response = await fetch(
-        `/api/custom-token?tokenId=${customTokenInput.symbol}&period=${customTokenInput.period}&targetPrice=${customTokenInput.targetPrice}&debug=${debugMode}`
-      );
-      
-      if (!response.ok) {
-        throw new Error(`API 呼叫失敗: ${response.status}`);
+      if (volatilityMethod === 'btc-implied') {
+        // 使用BTC隱含波動率推導方法
+        await calculateWithBtcImpliedVolatility();
+      } else {
+        // 使用歷史波動率方法
+        await calculateWithHistoricalVolatility();
       }
-      
-      const result = await response.json();
-      
-      if (!result.success) {
-        throw new Error(result.details || result.error || '計算失敗');
-      }
-      
-      console.log(`[Calculator] ✅ 自定義代幣計算完成:`, result.calculation);
-      
-      // 轉換成與原有 DiscountCalculation 兼容的格式
-      const customCalculation: DiscountCalculation = {
-        annualizedRate: result.calculation.annualizedRate,
-        fairValue: result.calculation.fairValue,
-        discount: result.calculation.callDiscountRate,
-        method: result.calculation.method,
-        callDiscount: result.calculation.callDiscountRate,
-        putDiscount: 0, // 自定義代幣模式只計算 Call
-        impliedVolatility: result.calculation.impliedVolatility,
-        theoreticalCallPrice: result.calculation.theoreticalCallPrice,
-        theoreticalPutPrice: 0, // 自定義代幣模式不計算 Put
-      };
-      
-      setCalculation(customCalculation);
-      setCustomTokenApiResult(result); // 保存完整的API結果
-      
-      // 設定虛擬價格數據以供結果顯示
-      setPrices({
-        token: 'BTC', // 佔位符
-        spot: result.calculation.currentPrice,
-        timestamp: new Date()
-      });
       
     } catch (error) {
       console.error('[Calculator] ❌ 自定義代幣計算失敗:', error);
@@ -119,6 +92,127 @@ export default function Calculator() {
     } finally {
       setLoading(false);
     }
+  };
+  
+  // 歷史波動率計算方法
+  const calculateWithHistoricalVolatility = async () => {
+    const response = await fetch(
+      `/api/custom-token?tokenId=${customTokenInput!.symbol}&period=${customTokenInput!.period}&targetPrice=${customTokenInput!.targetPrice}`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`API 呼叫失敗: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (!result.success) {
+      throw new Error(result.details || result.error || '計算失敗');
+    }
+    
+    console.log(`[Calculator] ✅ 歷史波動率計算完成:`, result.calculation);
+    
+    // 轉換成與原有 DiscountCalculation 兼容的格式
+    const customCalculation: DiscountCalculation = {
+      annualizedRate: result.calculation.annualizedRate,
+      fairValue: result.calculation.fairValue,
+      discount: result.calculation.callDiscountRate,
+      method: result.calculation.method,
+      callDiscount: result.calculation.callDiscountRate,
+      putDiscount: 0, // 自定義代幣模式只計算 Call
+      impliedVolatility: result.calculation.impliedVolatility,
+      theoreticalCallPrice: result.calculation.theoreticalCallPrice,
+      theoreticalPutPrice: 0, // 自定義代幣模式不計算 Put
+    };
+    
+    setCalculation(customCalculation);
+    setCustomTokenApiResult(result); // 保存完整的API結果
+    
+    // 設定虛擬價格數據以供結果顯示
+    setPrices({
+      token: 'BTC', // 佔位符
+      spot: result.calculation.currentPrice,
+      timestamp: new Date()
+    });
+  };
+  
+  // BTC隱含波動率推導方法
+  const calculateWithBtcImpliedVolatility = async () => {
+    // 首先獲取beta分析結果
+    const betaResponse = await fetch(
+      `/api/beta-analysis?tokenId=${customTokenInput!.symbol}&period=${customTokenInput!.period}`
+    );
+    
+    if (!betaResponse.ok) {
+      throw new Error(`Beta分析失敗: ${betaResponse.status}`);
+    }
+    
+    const betaResult = await betaResponse.json();
+    
+    if (!betaResult.success) {
+      throw new Error(betaResult.details || betaResult.error || 'Beta分析失敗');
+    }
+    
+    console.log(`[Calculator] ✅ Beta分析完成:`, betaResult);
+    setBetaAnalysisResult(betaResult);
+    
+    // 同時獲取歷史波動率結果作為比較
+    try {
+      const historicalResponse = await fetch(
+        `/api/custom-token?tokenId=${customTokenInput!.symbol}&period=${customTokenInput!.period}&targetPrice=${customTokenInput!.targetPrice}`
+      );
+      
+      if (historicalResponse.ok) {
+        const historicalResult = await historicalResponse.json();
+        if (historicalResult.success) {
+          const historicalCalc: DiscountCalculation = {
+            annualizedRate: historicalResult.calculation.annualizedRate,
+            fairValue: historicalResult.calculation.fairValue,
+            discount: historicalResult.calculation.callDiscountRate,
+            method: historicalResult.calculation.method,
+            callDiscount: historicalResult.calculation.callDiscountRate,
+            putDiscount: 0,
+            impliedVolatility: historicalResult.calculation.impliedVolatility,
+            theoreticalCallPrice: historicalResult.calculation.theoreticalCallPrice,
+            theoreticalPutPrice: 0,
+          };
+          setHistoricalCalculation(historicalCalc);
+        }
+      }
+    } catch (error) {
+      console.warn('[Calculator] ⚠️ 無法獲取歷史波動率比較數據:', error);
+    }
+    
+    // 使用BTC推導的隱含波動率重新計算選擇權價格
+    const derivedImpliedVol = betaResult.volatilityComparison.derivedImpliedVolatility / 100; // Convert to decimal
+    
+    // 模擬Black-Scholes計算使用推導的隱含波動率
+    const btcCalculation: DiscountCalculation = {
+      annualizedRate: 0, // Will be calculated
+      fairValue: 0, // Will be calculated  
+      discount: 0, // Will be calculated
+      method: 'btc-implied-volatility',
+      callDiscount: betaResult.volatilityComparison.derivedImpliedVolatility * 0.15, // Approximate using beta relationship
+      putDiscount: 0,
+      impliedVolatility: betaResult.volatilityComparison.derivedImpliedVolatility,
+      theoreticalCallPrice: betaResult.currentPrice * derivedImpliedVol * Math.sqrt(customTokenInput!.period === '1Y' ? 1 : customTokenInput!.period === '6M' ? 0.5 : customTokenInput!.period === '3M' ? 0.25 : 2),
+      theoreticalPutPrice: 0,
+    };
+    
+    // 重新計算年化率和公平價值
+    const lockupDays = customTokenInput!.period === '1Y' ? 365 : customTokenInput!.period === '6M' ? 180 : customTokenInput!.period === '3M' ? 90 : 730;
+    btcCalculation.annualizedRate = (btcCalculation.callDiscount * 365) / lockupDays;
+    btcCalculation.fairValue = betaResult.currentPrice - btcCalculation.theoreticalCallPrice;
+    btcCalculation.discount = btcCalculation.callDiscount;
+    
+    setCalculation(btcCalculation);
+    
+    // 設定虛擬價格數據
+    setPrices({
+      token: 'BTC',
+      spot: betaResult.currentPrice,
+      timestamp: new Date()
+    });
   };
 
   const updatePrices = async () => {
@@ -133,369 +227,98 @@ export default function Calculator() {
     setDualExpiryInfo(null);
     setOptionsData(null);
     
-    // 初始化調試信息
-    const startTime = Date.now();
     const lockupDays = lockupPeriodToDays(period);
     
     // Get dynamic treasury rate based on period
     const riskFreeRate = await getTreasuryRateForPeriod(period);
     console.log(`[Calculator] 💰 Using ${period} treasury rate: ${(riskFreeRate * 100).toFixed(2)}%`);
     
-    const timeToExpiry = lockupDays / 365;
-    
-    const debugInfo: DebugInfo = {
-      dataFetchStatus: {
-        spotPrice: null,
-        optionsData: null,
-        overall: 'loading'
-      },
-      calculationSteps: [],
-      rawData: {},
-      parameters: {
-        riskFreeRate,
-        timeToExpiry,
-        lockupDays
-      },
-      warnings: [],
-      timestamp: new Date()
-    };
-    
-    const addCalculationStep = (step: Omit<CalculationStep, 'id'>) => {
-      debugInfo.calculationSteps.push({
-        ...step,
-        id: `step-${debugInfo.calculationSteps.length + 1}`
-      });
-      setDebugInfo({ ...debugInfo });
-    };
-    
-    const updateApiStatus = (endpoint: 'spotPrice' | 'optionsData', status: Partial<ApiCallStatus>) => {
-      debugInfo.dataFetchStatus[endpoint] = {
-        ...debugInfo.dataFetchStatus[endpoint],
-        ...status
-      } as ApiCallStatus;
-      setDebugInfo({ ...debugInfo });
-    };
-    
     try {
-      addCalculationStep({
-        name: '初始化計算',
-        status: 'completed',
-        description: `開始計算 ${token} ${period} 鎖倉折扣率`,
-        input: { token, period, lockupDays },
-        duration: 0
-      });
-      
       // 步驟1: 獲取現貨價格
       updateCalculationStep('market-data', {
         status: 'processing',
         description: `正在從 CoinGecko API 獲取 ${token} 現貨價格...`
       });
       
-      addCalculationStep({
-        name: '獲取現貨價格',
-        status: 'processing',
-        description: '從 CoinGecko API 獲取現貨價格'
-      });
-      
-      const priceStartTime = Date.now();
-      updateApiStatus('spotPrice', {
-        endpoint: '/api/prices',
-        status: 'pending',
-        startTime: priceStartTime
-      });
-      
-      const priceResponse = await fetch(`/api/prices?token=${token}&debug=${debugMode}`);
-      const priceDuration = Date.now() - priceStartTime;
+      const priceResponse = await fetch(`/api/prices?token=${token}`);
       
       if (!priceResponse.ok) {
-        updateApiStatus('spotPrice', {
-          status: 'error',
-          endTime: Date.now(),
-          duration: priceDuration,
-          errorMessage: `HTTP ${priceResponse.status}`
-        });
-        
         updateCalculationStep('market-data', {
           status: 'error',
           description: `現貨價格獲取失敗: HTTP ${priceResponse.status}`
         });
-        
         throw new Error('Failed to fetch prices');
       }
       
       const priceData = await priceResponse.json();
-      updateApiStatus('spotPrice', {
-        status: 'success',
-        endTime: Date.now(),
-        duration: priceDuration,
-        responseSize: JSON.stringify(priceData).length
-      });
-      
-      debugInfo.rawData.spotPriceResponse = priceData;
       setPrices(priceData);
       
       updateCalculationStep('market-data', {
         status: 'completed',
-        description: `✅ ${token} 現貨價格: $${priceData.spot.toLocaleString()}`,
-        output: { spotPrice: priceData.spot, source: 'CoinGecko' },
-        duration: priceDuration
+        description: `✅ ${token} 現貨價格: $${priceData.spot.toLocaleString()}`
       });
       
-      addCalculationStep({
-        name: '獲取現貨價格',
-        status: 'completed',
-        description: `成功獲取 ${token} 現貨價格`,
-        output: {
-          spotPrice: priceData.spot
-        },
-        duration: priceDuration
-      });
-      
-      // 步驟2: 雙到期日選擇權數據獲取
-      let optionsCalc: DiscountCalculation | null = null;
-      let optionsChainData: OptionData[] = [];
-      
+      // 步驟2: 獲取選擇權數據
       updateCalculationStep('dual-expiry-selection', {
         status: 'processing',
         description: '正在嘗試雙到期日方差外推法...'
       });
       
-      addCalculationStep({
-        name: '獲取選擇權數據',
-        status: 'processing',
-        description: '從 Deribit API 獲取選擇權鏈數據'
-      });
+      const optionsResponse = await fetch(
+        `/api/options?token=${token}&period=${period}&spotPrice=${priceData.spot}`
+      );
       
-      try {
-        const optionsStartTime = Date.now();
-        updateApiStatus('optionsData', {
-          endpoint: '/api/options',
-          status: 'pending',
-          startTime: optionsStartTime
-        });
+      if (optionsResponse.ok) {
+        const optionsResult = await optionsResponse.json();
         
-        const optionsResponse = await fetch(
-          `/api/options?token=${token}&period=${period}&spotPrice=${priceData.spot}&debug=${debugMode}`
-        );
-        const optionsDuration = Date.now() - optionsStartTime;
-        
-        if (optionsResponse.ok) {
-          const optionsResult = await optionsResponse.json();
-          optionsChainData = optionsResult.optionsData || [];
+        if (optionsResult.success && optionsResult.optionsData) {
+          const optionsChainData = optionsResult.optionsData;
+          const optionsCalc = optionsResult.dualExpiryCalculation;
+          const dualExpiryInfo = optionsResult.dualExpiryInfo;
+          
           setOptionsData(optionsChainData);
+          setCalculation(optionsCalc);
+          setDualExpiryInfo(dualExpiryInfo);
           
-          // 檢查計算方法並更新相應步驟
-          if (optionsResult.dualExpiryCalculation) {
-            optionsCalc = optionsResult.dualExpiryCalculation;
-            setDualExpiryInfo(optionsResult.dualExpiryInfo);
-            console.log(`使用雙到期日計算結果: ${optionsResult.calculationMethod}`);
-            
-            // 更新所有雙到期日相關步驟為完成狀態
-            updateCalculationStep('dual-expiry-selection', {
-              status: 'completed',
-              description: `✅ 策略: ${optionsResult.dualExpiryInfo?.strategy === 'interpolation' ? '內插法' : 
-                                    optionsResult.dualExpiryInfo?.strategy === 'extrapolation' ? '外推法' : '有界外推法'}`,
-              output: {
-                strategy: optionsResult.dualExpiryInfo?.strategy,
-                shortTermExpiry: optionsResult.dualExpiryInfo?.shortTermExpiry,
-                longTermExpiry: optionsResult.dualExpiryInfo?.longTermExpiry
-              },
-              duration: optionsDuration
-            });
-            
-            updateCalculationStep('common-strikes', {
-              status: 'completed',
-              description: `✅ 找到 ${optionsCalc?.totalContracts || 0} 個共同ATM執行價格`,
-              output: { commonStrikes: optionsCalc?.totalContracts || 0 }
-            });
-            
-            updateCalculationStep('variance-extrapolation', {
-              status: 'completed',
-              description: `✅ 外推波動率: ${optionsCalc?.impliedVolatility?.toFixed(1)}%`,
-              output: { 
-                shortTermIV: optionsResult.dualExpiryInfo?.shortTermIV,
-                longTermIV: optionsResult.dualExpiryInfo?.longTermIV,
-                extrapolatedIV: optionsCalc?.impliedVolatility 
-              }
-            });
-            
-            updateCalculationStep('black-scholes', {
-              status: 'completed',
-              description: `✅ 計算理論期權價格 (Call: $${optionsCalc?.theoreticalCallPrice?.toFixed(0) || 0}, Put: $${optionsCalc?.theoreticalPutPrice?.toFixed(0) || 0})`,
-              output: {
-                callPrice: optionsCalc?.theoreticalCallPrice,
-                putPrice: optionsCalc?.theoreticalPutPrice
-              }
-            });
-            
-            updateCalculationStep('discount-calculation', {
-              status: 'completed',
-              description: `✅ Call折扣: ${optionsCalc?.callDiscount?.toFixed(2)}%, Put折扣: ${optionsCalc?.putDiscount?.toFixed(2)}%`,
-              output: {
-                callDiscount: optionsCalc?.callDiscount,
-                putDiscount: optionsCalc?.putDiscount,
-                annualizedRate: optionsCalc?.annualizedRate
-              }
-            });
-          } else {
-            // 回退到單一到期日方法
-            setDualExpiryInfo(null);
-            updateCalculationStep('dual-expiry-selection', {
-              status: 'error',
-              description: '❌ 雙到期日方法失敗，回退到單一到期日方法'
-            });
-            
-            // 將其他步驟標記為跳過
-            ['common-strikes', 'variance-extrapolation'].forEach(stepId => {
-              updateCalculationStep(stepId, {
-                status: 'pending',
-                description: '⏭️ 跳過 (使用單一到期日方法)'
-              });
-            });
-          }
-          
-          updateApiStatus('optionsData', {
-            status: 'success',
-            endTime: Date.now(),
-            duration: optionsDuration,
-            responseSize: JSON.stringify(optionsResult).length
-          });
-          
-          debugInfo.rawData.optionsChainResponse = optionsResult;
-          debugInfo.rawData.selectedOptions = optionsChainData;
-          
-          // 數據驗證
-          const validationWarnings = validateOptionsData(optionsChainData, priceData.spot);
-          if (validationWarnings.length > 0) {
-            debugInfo.warnings.push(...validationWarnings.map(w => `選擇權數據驗證: ${w}`));
-          }
-          
-          addCalculationStep({
-            name: '獲取選擇權數據',
+          // 更新計算步驟
+          updateCalculationStep('dual-expiry-selection', {
             status: 'completed',
-            description: `找到 ${optionsChainData.length} 個可用選擇權合約${validationWarnings.length > 0 ? ` (${validationWarnings.length} 個警告)` : ''}`,
-            output: {
-              contractsFound: optionsChainData.length,
-              quality: optionsResult.quality,
-              validationWarnings: validationWarnings
-            },
-            duration: optionsDuration
+            description: `✅ 策略: ${dualExpiryInfo?.strategy === 'interpolation' ? '內插法' : 
+                                  dualExpiryInfo?.strategy === 'extrapolation' ? '外推法' : '有界外推法'}`
           });
           
-          if (optionsChainData.length > 0) {
-            addCalculationStep({
-              name: '選擇權平價法計算',
-              status: 'processing',
-              description: '使用 Put-Call Parity 計算隱含遠期價格',
-              formula: 'Forward = Strike + e^(r×T) × (Call - Put)'
-            });
-            
-            const optionsCalcStartTime = Date.now();
-            optionsCalc = calculateDiscountFromOptions(
-              optionsChainData,
-              priceData.spot,
-              lockupDays,
-              riskFreeRate
-            );
-            const optionsCalcDuration = Date.now() - optionsCalcStartTime;
-            
-            // 找到使用的ATM選擇權
-            const atmOption = optionsChainData.reduce((closest, current) => {
-              const closestDiff = Math.abs(closest.strike - priceData.spot);
-              const currentDiff = Math.abs(current.strike - priceData.spot);
-              return currentDiff < closestDiff ? current : closest;
-            });
-            
-            addCalculationStep({
-              name: '選擇權平價法計算',
-              status: 'completed',
-              description: '選擇權平價法計算完成',
-              input: {
-                atmOption: {
-                  strike: atmOption.strike,
-                  callPrice: atmOption.callPrice,
-                  putPrice: atmOption.putPrice
-                },
-                spotPrice: priceData.spot,
-                riskFreeRate,
-                timeToExpiry
-              },
-              output: optionsCalc,
-              duration: optionsCalcDuration
-            });
-            
-            setCalculation(optionsCalc);
-          } else {
-            debugInfo.warnings.push('未找到可用的選擇權合約');
-            addCalculationStep({
-              name: '選擇權平價法計算',
-              status: 'error',
-              description: '沒有可用的選擇權數據',
-              errorMessage: '未找到符合條件的選擇權合約'
-            });
-          }
+          updateCalculationStep('common-strikes', {
+            status: 'completed',
+            description: `✅ 找到 ${optionsChainData?.length || 0} 個合約`
+          });
+          
+          updateCalculationStep('variance-extrapolation', {
+            status: 'completed',
+            description: `✅ 外推波動率: ${optionsCalc?.impliedVolatility?.toFixed(1)}%`
+          });
+          
+          updateCalculationStep('black-scholes', {
+            status: 'completed',
+            description: `✅ Black-Scholes 計算完成`
+          });
+          
+          updateCalculationStep('discount-calculation', {
+            status: 'completed',
+            description: `✅ Call折扣: ${optionsCalc?.callDiscount?.toFixed(2)}%, Put折扣: ${optionsCalc?.putDiscount?.toFixed(2)}%`
+          });
         } else {
-          updateApiStatus('optionsData', {
-            status: 'error',
-            endTime: Date.now(),
-            duration: optionsDuration,
-            errorMessage: `HTTP ${optionsResponse.status}`
-          });
-          
-          debugInfo.warnings.push(`選擇權數據獲取失敗: HTTP ${optionsResponse.status}`);
-          addCalculationStep({
-            name: '獲取選擇權數據',
-            status: 'error',
-            description: '選擇權數據獲取失敗',
-            errorMessage: `HTTP ${optionsResponse.status}`,
-            duration: optionsDuration
-          });
+          setOptionsData([]);
         }
-      } catch (optionsError) {
-        const errorMessage = optionsError instanceof Error ? optionsError.message : '未知錯誤';
-        debugInfo.warnings.push(`選擇權計算失敗: ${errorMessage}`);
-        addCalculationStep({
-          name: '選擇權數據處理',
-          status: 'error',
-          description: '選擇權數據處理過程中發生錯誤',
-          errorMessage: errorMessage
-        });
+      } else {
+        setOptionsData([]);
       }
       
-      // 更新整體狀態
-      debugInfo.dataFetchStatus.overall = optionsCalc ? 'success' : 'error';
-      
-      const totalDuration = Date.now() - startTime;
-      addCalculationStep({
-        name: '計算完成',
-        status: 'completed',
-        description: `所有計算步驟完成，總耗時 ${totalDuration}ms`,
-        duration: totalDuration
-      });
-      
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
-      debugInfo.dataFetchStatus.overall = 'error';
-      debugInfo.warnings.push(`計算過程發生錯誤: ${errorMessage}`);
-      
-      addCalculationStep({
-        name: '計算失敗',
-        status: 'error',
-        description: '計算過程中發生嚴重錯誤',
-        errorMessage: errorMessage
-      });
-      
       console.error('Error fetching data:', error);
       alert('獲取數據失敗，請稍後再試');
     } finally {
       setLoading(false);
       setOptionsLoading(false);
-      setDebugInfo(debugInfo);
-      
-      // 如果是第一次計算且有調試數據，自動打開調試面板
-      if (debugMode && !debugPanelOpen && debugInfo.calculationSteps.length > 0) {
-        setDebugPanelOpen(true);
-      }
     }
   };
 
@@ -599,18 +422,6 @@ export default function Calculator() {
           </div>
         )}
 
-        {/* Debug Mode Toggle */}
-        <div className="mb-4">
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={debugMode}
-              onChange={(e) => setDebugMode(e.target.checked)}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <span className="text-sm text-gray-700">調試模式 (顯示詳細計算過程)</span>
-          </label>
-        </div>
 
         {/* Calculate Button */}
         <div className="mb-6">
@@ -633,23 +444,11 @@ export default function Calculator() {
           )}
           
           {/* Loading Progress */}
-          {(loading || optionsLoading) && debugInfo && (
+          {(loading || optionsLoading) && (
             <div className="mt-2 p-3 bg-blue-50 rounded-md">
-              <div className="text-sm text-blue-700 font-medium mb-2">處理進度</div>
-              <div className="space-y-1">
-                {debugInfo.calculationSteps.slice(-3).map((step) => (
-                  <div key={step.id} className="flex items-center space-x-2 text-xs">
-                    <span className={`w-2 h-2 rounded-full ${
-                      step.status === 'completed' ? 'bg-green-500' :
-                      step.status === 'processing' ? 'bg-blue-500 animate-pulse' :
-                      step.status === 'error' ? 'bg-red-500' : 'bg-gray-300'
-                    }`}></span>
-                    <span className="text-gray-600">{step.name}</span>
-                    {step.duration && (
-                      <span className="text-gray-400">({step.duration}ms)</span>
-                    )}
-                  </div>
-                ))}
+              <div className="text-sm text-blue-700 font-medium mb-2">正在獲取數據...</div>
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
               </div>
             </div>
           )}
@@ -695,12 +494,23 @@ export default function Calculator() {
                 period={period}
               />
             ) : (
-              <HistoricalVolatilityResults
-                calculation={calculation}
-                spotPrice={prices.spot}
-                customTokenInput={customTokenInput!}
-                volatilityData={customTokenApiResult?.volatilityAnalysis}
-              />
+              // 根據計算方法顯示不同的結果組件
+              (customTokenInput as any)?.volatilityMethod === 'btc-implied' ? (
+                <BetaImpliedVolatilityResults
+                  calculation={calculation}
+                  spotPrice={prices.spot}
+                  customTokenInput={customTokenInput!}
+                  betaAnalysis={betaAnalysisResult?.betaAnalysis}
+                  historicalCalculation={historicalCalculation}
+                />
+              ) : (
+                <HistoricalVolatilityResults
+                  calculation={calculation}
+                  spotPrice={prices.spot}
+                  customTokenInput={customTokenInput!}
+                  volatilityData={customTokenApiResult?.volatilityAnalysis}
+                />
+              )
             )}
           </div>
         )}
@@ -714,12 +524,6 @@ export default function Calculator() {
           </div>
         )}
 
-        {/* Debug Panel */}
-        <DebugPanel 
-          debugInfo={debugInfo}
-          isVisible={debugPanelOpen}
-          onToggle={() => setDebugPanelOpen(!debugPanelOpen)}
-        />
       </div>
     </div>
   );
