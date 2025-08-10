@@ -9,7 +9,7 @@ interface BetaImpliedVolatilityResultsProps {
   spotPrice: number;
   customTokenInput: CustomTokenInput;
   betaAnalysis?: any; // Beta analysis data from API
-  historicalCalculation?: DiscountCalculation; // For comparison
+  historicalCalculation?: DiscountCalculation | null; // For comparison
 }
 
 const formatCurrency = (value: number) => {

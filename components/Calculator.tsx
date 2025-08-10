@@ -186,24 +186,25 @@ export default function Calculator() {
     // 使用BTC推導的隱含波動率重新計算選擇權價格
     const derivedImpliedVol = betaResult.volatilityComparison.derivedImpliedVolatility / 100; // Convert to decimal
     
+    // 計算折扣率和相關指標
+    const callDiscountRate = betaResult.volatilityComparison.derivedImpliedVolatility * 0.15; // Approximate using beta relationship
+    const theoreticalCallPrice = betaResult.currentPrice * derivedImpliedVol * Math.sqrt(customTokenInput!.period === '1Y' ? 1 : customTokenInput!.period === '6M' ? 0.5 : customTokenInput!.period === '3M' ? 0.25 : 2);
+    const lockupDays = customTokenInput!.period === '1Y' ? 365 : customTokenInput!.period === '6M' ? 180 : customTokenInput!.period === '3M' ? 90 : 730;
+    const annualizedRate = (callDiscountRate * 365) / lockupDays;
+    const fairValue = betaResult.currentPrice - theoreticalCallPrice;
+    
     // 模擬Black-Scholes計算使用推導的隱含波動率
     const btcCalculation: DiscountCalculation = {
-      annualizedRate: 0, // Will be calculated
-      fairValue: 0, // Will be calculated  
-      discount: 0, // Will be calculated
+      annualizedRate,
+      fairValue,
+      discount: callDiscountRate,
       method: 'btc-implied-volatility',
-      callDiscount: betaResult.volatilityComparison.derivedImpliedVolatility * 0.15, // Approximate using beta relationship
+      callDiscount: callDiscountRate,
       putDiscount: 0,
       impliedVolatility: betaResult.volatilityComparison.derivedImpliedVolatility,
-      theoreticalCallPrice: betaResult.currentPrice * derivedImpliedVol * Math.sqrt(customTokenInput!.period === '1Y' ? 1 : customTokenInput!.period === '6M' ? 0.5 : customTokenInput!.period === '3M' ? 0.25 : 2),
+      theoreticalCallPrice,
       theoreticalPutPrice: 0,
     };
-    
-    // 重新計算年化率和公平價值
-    const lockupDays = customTokenInput!.period === '1Y' ? 365 : customTokenInput!.period === '6M' ? 180 : customTokenInput!.period === '3M' ? 90 : 730;
-    btcCalculation.annualizedRate = (btcCalculation.callDiscount * 365) / lockupDays;
-    btcCalculation.fairValue = betaResult.currentPrice - btcCalculation.theoreticalCallPrice;
-    btcCalculation.discount = btcCalculation.callDiscount;
     
     setCalculation(btcCalculation);
     
