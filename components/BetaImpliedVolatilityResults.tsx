@@ -94,24 +94,24 @@ export default function BetaImpliedVolatilityResults({
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
             <div>
               <span className="text-blue-700 font-medium">Beta係數</span>
-              <p className="text-blue-900 font-bold text-lg">{betaAnalysis.beta?.toFixed(3) || 'N/A'}</p>
+              <p className="text-blue-900 font-bold text-lg">{betaAnalysis?.betaAnalysis?.beta?.toFixed(3) || 'N/A'}</p>
             </div>
             <div>
               <span className="text-blue-700 font-medium">相關性</span>
-              <p className="text-blue-900 font-bold">{betaAnalysis.correlation ? (betaAnalysis.correlation * 100).toFixed(1) + '%' : 'N/A'}</p>
+              <p className="text-blue-900 font-bold">{betaAnalysis?.betaAnalysis?.correlation ? (betaAnalysis.betaAnalysis.correlation * 100).toFixed(1) + '%' : 'N/A'}</p>
             </div>
             <div>
               <span className="text-blue-700 font-medium">R²</span>
-              <p className="text-blue-900 font-bold">{betaAnalysis.rSquared ? (betaAnalysis.rSquared * 100).toFixed(1) + '%' : 'N/A'}</p>
+              <p className="text-blue-900 font-bold">{betaAnalysis?.betaAnalysis?.rSquared ? (betaAnalysis.betaAnalysis.rSquared * 100).toFixed(1) + '%' : 'N/A'}</p>
             </div>
             <div>
               <span className="text-blue-700 font-medium">信心水準</span>
               <p className={`font-bold ${
-                betaAnalysis.confidence === 'high' ? 'text-green-700' :
-                betaAnalysis.confidence === 'medium' ? 'text-yellow-700' : 'text-red-700'
+                betaAnalysis?.volatilityComparison?.confidence === 'high' ? 'text-green-700' :
+                betaAnalysis?.volatilityComparison?.confidence === 'medium' ? 'text-yellow-700' : 'text-red-700'
               }`}>
-                {betaAnalysis.confidence === 'high' ? '高' :
-                 betaAnalysis.confidence === 'medium' ? '中' : '低'}
+                {betaAnalysis?.volatilityComparison?.confidence === 'high' ? '高' :
+                 betaAnalysis?.volatilityComparison?.confidence === 'medium' ? '中' : '低'}
               </p>
             </div>
           </div>
@@ -127,19 +127,19 @@ export default function BetaImpliedVolatilityResults({
             <div className="mt-4 pt-3 border-t border-blue-200 space-y-2 text-sm">
               <div className="flex justify-between">
                 <span>BTC波動率:</span>
-                <span className="font-medium">{betaAnalysis.btcVolatility?.toFixed(1)}%</span>
+                <span className="font-medium">{betaAnalysis.betaAnalysis?.btcVolatility?.toFixed(1)}%</span>
               </div>
               <div className="flex justify-between">
                 <span>小幣波動率:</span>
-                <span className="font-medium">{betaAnalysis.altcoinVolatility?.toFixed(1)}%</span>
+                <span className="font-medium">{betaAnalysis.betaAnalysis?.altcoinVolatility?.toFixed(1)}%</span>
               </div>
               <div className="flex justify-between">
                 <span>數據點數:</span>
-                <span className="font-medium">{betaAnalysis.dataPoints}</span>
+                <span className="font-medium">{betaAnalysis.betaAnalysis?.dataPoints}</span>
               </div>
               <div className="flex justify-between">
                 <span>計算期間:</span>
-                <span className="font-medium">{betaAnalysis.calculationPeriodDays}天</span>
+                <span className="font-medium">{betaAnalysis.betaAnalysis?.calculationPeriodDays}天</span>
               </div>
             </div>
           )}
@@ -169,7 +169,7 @@ export default function BetaImpliedVolatilityResults({
         
         <p className="text-purple-100">
           基於BTC選擇權市場隱含波動率({betaAnalysis?.btcImpliedVolatility?.impliedVolatility?.toFixed(1)}%)
-          和Beta係數({betaAnalysis?.beta?.toFixed(3)})推導的折扣率。
+          和Beta係數({betaAnalysis?.betaAnalysis?.beta?.toFixed(3)})推導的折扣率。
         </p>
       </div>
 
@@ -284,14 +284,14 @@ export default function BetaImpliedVolatilityResults({
           <h4 className="font-medium text-blue-900 mb-2">💡 BTC隱含波動率推導優勢</h4>
           <p className="text-sm text-blue-800">
             相比歷史波動率，BTC隱含波動率方法整合了選擇權市場的forward-looking預期，
-            通過Beta係數反映小幣相對BTC的風險倍數({betaAnalysis?.beta?.toFixed(2)}倍)，
+            通過Beta係數反映小幣相對BTC的風險倍數({betaAnalysis?.betaAnalysis?.beta?.toFixed(2)}倍)，
             更能反映當前市場對未來波動的預期。信心水準：
             <span className={`font-medium ml-1 ${
-              betaAnalysis?.confidence === 'high' ? 'text-green-700' :
-              betaAnalysis?.confidence === 'medium' ? 'text-yellow-700' : 'text-red-700'
+              betaAnalysis?.volatilityComparison?.confidence === 'high' ? 'text-green-700' :
+              betaAnalysis?.volatilityComparison?.confidence === 'medium' ? 'text-yellow-700' : 'text-red-700'
             }`}>
-              {betaAnalysis?.confidence === 'high' ? '高' :
-               betaAnalysis?.confidence === 'medium' ? '中' : '低'}
+              {betaAnalysis?.volatilityComparison?.confidence === 'high' ? '高' :
+               betaAnalysis?.volatilityComparison?.confidence === 'medium' ? '中' : '低'}
             </span>
           </p>
         </div>
@@ -329,13 +329,13 @@ export default function BetaImpliedVolatilityResults({
                 <div className="flex justify-between p-3 bg-blue-50 rounded">
                   <span>2. Beta係數計算:</span>
                   <span className="font-medium">
-                    {betaAnalysis?.beta?.toFixed(3)} (相關性: {betaAnalysis?.correlation ? (betaAnalysis.correlation * 100).toFixed(1) + '%' : 'N/A'})
+                    {betaAnalysis?.betaAnalysis?.beta?.toFixed(3)} (相關性: {betaAnalysis?.betaAnalysis?.correlation ? (betaAnalysis.betaAnalysis.correlation * 100).toFixed(1) + '%' : 'N/A'})
                   </span>
                 </div>
                 <div className="flex justify-between p-3 bg-blue-50 rounded">
                   <span>3. 推導隱含波動率:</span>
                   <span className="font-medium">
-                    {betaAnalysis?.btcImpliedVolatility?.impliedVolatility?.toFixed(1)}% × {betaAnalysis?.beta?.toFixed(3)} = {calculation.impliedVolatility?.toFixed(1)}%
+                    {betaAnalysis?.btcImpliedVolatility?.impliedVolatility?.toFixed(1)}% × {betaAnalysis?.betaAnalysis?.beta?.toFixed(3)} = {calculation.impliedVolatility?.toFixed(1)}%
                   </span>
                 </div>
                 <div className="flex justify-between p-3 bg-green-50 rounded border border-green-200">
@@ -356,11 +356,11 @@ export default function BetaImpliedVolatilityResults({
                   </div>
                   <div className="flex justify-between p-3 bg-gray-50 rounded">
                     <span className="text-gray-600">數據期間:</span>
-                    <span className="font-medium">{betaAnalysis.calculationPeriodDays}天</span>
+                    <span className="font-medium">{betaAnalysis.betaAnalysis?.calculationPeriodDays}天</span>
                   </div>
                   <div className="flex justify-between p-3 bg-gray-50 rounded">
                     <span className="text-gray-600">數據點數:</span>
-                    <span className="font-medium">{betaAnalysis.dataPoints}個</span>
+                    <span className="font-medium">{betaAnalysis.betaAnalysis?.dataPoints}個</span>
                   </div>
                 </div>
               </div>

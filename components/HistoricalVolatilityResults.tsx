@@ -10,6 +10,12 @@ interface HistoricalVolatilityResultsProps {
   spotPrice: number;
   customTokenInput: CustomTokenInput;
   volatilityData?: any;
+  treasuryRateData?: {
+    rate: number;
+    displayText: string;
+    source: string;
+    date: string;
+  };
 }
 
 const formatCurrency = (value: number) => {
@@ -46,7 +52,8 @@ export default function HistoricalVolatilityResults({
   calculation, 
   spotPrice, 
   customTokenInput,
-  volatilityData
+  volatilityData,
+  treasuryRateData
 }: HistoricalVolatilityResultsProps) {
   const [showCalculationDetails, setShowCalculationDetails] = useState(false);
   const [treasuryRateInfo, setTreasuryRateInfo] = useState<{
@@ -61,6 +68,17 @@ export default function HistoricalVolatilityResults({
   // Fetch treasury rate info for display
   useEffect(() => {
     const fetchTreasuryInfo = async () => {
+      // If treasury rate data is passed in from API, use it directly
+      if (treasuryRateData) {
+        setTreasuryRateInfo({
+          displayText: treasuryRateData.displayText,
+          source: treasuryRateData.source,
+          rate: treasuryRateData.rate
+        });
+        return;
+      }
+
+      // Otherwise, fetch from treasury API
       try {
         const info = await getTreasuryRateInfo(customTokenInput.period as LockupPeriod);
         setTreasuryRateInfo({
@@ -74,7 +92,7 @@ export default function HistoricalVolatilityResults({
     };
     
     fetchTreasuryInfo();
-  }, [customTokenInput.period]);
+  }, [customTokenInput.period, treasuryRateData]);
   
   // Calculate period-specific values
   const periodDaysMap = {
@@ -140,6 +158,9 @@ export default function HistoricalVolatilityResults({
             <span className="text-purple-900 font-semibold">{treasuryRateInfo.displayText}</span>
             {treasuryRateInfo.source === 'FALLBACK' && (
               <span className="ml-2 text-orange-600 text-xs">⚠️ 預設值</span>
+            )}
+            {treasuryRateInfo.source === 'FRED_API' && (
+              <span className="ml-2 text-green-600 text-xs">✅ 即時數據</span>
             )}
           </div>
         )}

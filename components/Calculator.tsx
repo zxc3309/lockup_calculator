@@ -11,6 +11,38 @@ import BetaImpliedVolatilityResults from './BetaImpliedVolatilityResults';
 import TokenModeSelector from './TokenModeSelector';
 import CustomTokenInput from './CustomTokenInput';
 
+// Black-Scholes Call option pricing function
+function blackScholesCall(
+  S: number,     // Current price
+  K: number,     // Strike price (target price)
+  T: number,     // Time to expiry (years)
+  r: number,     // Risk-free rate
+  sigma: number  // Volatility
+): number {
+  const d1 = (Math.log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+  const d2 = d1 - sigma * Math.sqrt(T);
+  
+  // Standard normal cumulative distribution function approximation
+  const normCdf = (x: number): number => {
+    const a1 =  0.254829592;
+    const a2 = -0.284496736;
+    const a3 =  1.421413741;
+    const a4 = -1.453152027;
+    const a5 =  1.061405429;
+    const p  =  0.3275911;
+
+    const sign = x < 0 ? -1 : 1;
+    const absX = Math.abs(x) / Math.sqrt(2.0);
+
+    const t = 1.0 / (1.0 + p * absX);
+    const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-absX * absX);
+
+    return 0.5 * (1.0 + sign * y);
+  };
+  
+  return S * normCdf(d1) - K * Math.exp(-r * T) * normCdf(d2);
+}
+
 export default function Calculator() {
   // 計算模式狀態
   const [calculationMode, setCalculationMode] = useState<TokenCalculationMode>('market-data');
@@ -183,13 +215,25 @@ export default function Calculator() {
       console.warn('[Calculator] ⚠️ 無法獲取歷史波動率比較數據:', error);
     }
     
-    // 使用BTC推導的隱含波動率重新計算選擇權價格
+    // 使用BTC推導的隱含波動率和正確的Black-Scholes公式計算Call價格
     const derivedImpliedVol = betaResult.volatilityComparison.derivedImpliedVolatility / 100; // Convert to decimal
-    
-    // 計算折扣率和相關指標
-    const callDiscountRate = betaResult.volatilityComparison.derivedImpliedVolatility * 0.15; // Approximate using beta relationship
-    const theoreticalCallPrice = betaResult.currentPrice * derivedImpliedVol * Math.sqrt(customTokenInput!.period === '1Y' ? 1 : customTokenInput!.period === '6M' ? 0.5 : customTokenInput!.period === '3M' ? 0.25 : 2);
     const lockupDays = customTokenInput!.period === '1Y' ? 365 : customTokenInput!.period === '6M' ? 180 : customTokenInput!.period === '3M' ? 90 : 730;
+    const timeToExpiry = lockupDays / 365; // Convert to years
+    
+    // Get risk-free rate (using the same treasury rate logic)
+    const riskFreeRate = await getTreasuryRateForPeriod(customTokenInput!.period);
+    
+    // Calculate Call option price using correct Black-Scholes formula
+    const theoreticalCallPrice = blackScholesCall(
+      betaResult.currentPrice,        // S: Current spot price
+      customTokenInput!.targetPrice,  // K: Strike price (target price)
+      timeToExpiry,                   // T: Time to expiry
+      riskFreeRate,                   // r: Risk-free rate
+      derivedImpliedVol              // σ: Derived implied volatility
+    );
+    
+    // Calculate correct discount rate: Call price / Spot price
+    const callDiscountRate = (theoreticalCallPrice / betaResult.currentPrice) * 100;
     const annualizedRate = (callDiscountRate * 365) / lockupDays;
     const fairValue = betaResult.currentPrice - theoreticalCallPrice;
     
@@ -501,7 +545,7 @@ export default function Calculator() {
                   calculation={calculation}
                   spotPrice={prices.spot}
                   customTokenInput={customTokenInput!}
-                  betaAnalysis={betaAnalysisResult?.betaAnalysis}
+                  betaAnalysis={betaAnalysisResult}
                   historicalCalculation={historicalCalculation}
                 />
               ) : (
@@ -510,6 +554,12 @@ export default function Calculator() {
                   spotPrice={prices.spot}
                   customTokenInput={customTokenInput!}
                   volatilityData={customTokenApiResult?.volatilityAnalysis}
+                  treasuryRateData={customTokenApiResult?.blackScholesParameters ? {
+                    rate: customTokenApiResult.blackScholesParameters.riskFreeRate / 100, // Convert to decimal
+                    displayText: `${customTokenApiResult.blackScholesParameters.riskFreeRate.toFixed(2)}% (${customTokenInput!.period === '1Y' ? '1年期' : customTokenInput!.period === '2Y' ? '2年期' : customTokenInput!.period === '6M' ? '6個月' : '3個月'}美國國庫券)`,
+                    source: 'FRED_API',
+                    date: new Date().toISOString().split('T')[0]
+                  } : undefined}
                 />
               )
             )}
