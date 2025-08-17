@@ -9,6 +9,7 @@ export interface CustomTokenInput {
   symbol: string;
   targetPrice: number;
   period: LockupPeriod;
+  volatilityDays?: number; // Number of days for historical volatility calculation (60, 90, or 180)
 }
 
 export interface PriceData {

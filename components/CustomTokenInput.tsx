@@ -13,6 +13,7 @@ export default function CustomTokenInput({ onInputChange, loading = false }: Cus
   const [targetPrice, setTargetPrice] = useState('');
   const [period, setPeriod] = useState<LockupPeriod>('1Y');
   const [volatilityMethod, setVolatilityMethod] = useState<'historical' | 'btc-implied'>('historical');
+  const [volatilityDays, setVolatilityDays] = useState<60 | 90 | 180>(90);
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   const [priceLoading, setPriceLoading] = useState(false);
   const [priceError, setPriceError] = useState<string | null>(null);
@@ -89,10 +90,11 @@ export default function CustomTokenInput({ onInputChange, loading = false }: Cus
         symbol: tokenId,
         targetPrice: parseFloat(targetPrice),
         period,
-        volatilityMethod
+        volatilityMethod,
+        volatilityDays
       });
     }
-  }, [symbol, targetPrice, period, volatilityMethod, onInputChange]);
+  }, [symbol, targetPrice, period, volatilityMethod, volatilityDays, onInputChange]);
 
   const targetPriceNum = parseFloat(targetPrice);
   const multiplier = currentPrice && targetPriceNum ? (targetPriceNum / currentPrice) : null;
@@ -179,7 +181,7 @@ export default function CustomTokenInput({ onInputChange, loading = false }: Cus
             />
             <span className="ml-2 text-sm text-gray-900">
               📈 歷史波動率
-              <span className="text-gray-500 ml-1">(90天歷史數據計算)</span>
+              <span className="text-gray-500 ml-1">(基於歷史數據計算)</span>
             </span>
           </label>
           
@@ -207,6 +209,36 @@ export default function CustomTokenInput({ onInputChange, loading = false }: Cus
             '💡 整合BTC選擇權市場預期，通過Beta係數推導小幣隱含波動率'
           )}
         </div>
+        
+        {/* Historical Volatility Days Selection - Only show when historical method is selected */}
+        {volatilityMethod === 'historical' && (
+          <div className="mt-3 pl-6">
+            <label className="block text-xs font-medium text-gray-600 mb-2">
+              歷史數據天數
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {([60, 90, 180] as const).map((days) => (
+                <button
+                  key={days}
+                  onClick={() => setVolatilityDays(days)}
+                  disabled={loading}
+                  className={`px-3 py-1.5 rounded-md font-medium text-xs transition-colors ${
+                    volatilityDays === days
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50'
+                  }`}
+                >
+                  {days}天
+                </button>
+              ))}
+            </div>
+            <div className="mt-1.5 text-xs text-gray-500">
+              {volatilityDays === 60 && '較短期間，反映近期市場情緒'}
+              {volatilityDays === 90 && '標準期間，平衡近期與中期趨勢'}
+              {volatilityDays === 180 && '較長期間，更穩定的歷史趨勢'}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Target Price Input */}

@@ -49,12 +49,16 @@ export async function GET(request: NextRequest) {
     const tokenId = searchParams.get('tokenId');
     const period = searchParams.get('period') as LockupPeriod;
     const targetPriceStr = searchParams.get('targetPrice');
+    const volatilityDaysStr = searchParams.get('volatilityDays');
     const debug = searchParams.get('debug') === 'true';
+    
+    // Parse volatility days with default value of 90
+    const volatilityDays = volatilityDaysStr ? parseInt(volatilityDaysStr) : 90;
     
     debugLog.push({
       step: 'parameter_validation',
       timestamp: Date.now(),
-      params: { tokenId, period, targetPrice: targetPriceStr }
+      params: { tokenId, period, targetPrice: targetPriceStr, volatilityDays }
     });
     
     // Validate inputs
@@ -87,12 +91,20 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    console.log(`[Custom Token API] 🚀 計算 ${tokenId} ${period} 折扣率, 目標價格: $${targetPrice}`);
+    // Validate volatility days
+    if (![60, 90, 180].includes(volatilityDays)) {
+      return NextResponse.json(
+        { error: 'Invalid volatility days. Must be 60, 90, or 180' },
+        { status: 400 }
+      );
+    }
+    
+    console.log(`[Custom Token API] 🚀 計算 ${tokenId} ${period} 折扣率, 目標價格: $${targetPrice}, 波動率天數: ${volatilityDays}`);
     
     debugLog.push({
       step: 'validation_complete',
       timestamp: Date.now(),
-      validated_params: { tokenId, period, targetPrice }
+      validated_params: { tokenId, period, targetPrice, volatilityDays }
     });
     
     // Phase 1: Get current price with multi-API support
@@ -115,10 +127,10 @@ export async function GET(request: NextRequest) {
     });
     
     // Phase 2: Fetch historical data and calculate volatility with multi-API support
-    console.log(`[Custom Token API] 📈 Phase 2: 獲取歷史數據並計算波動率...`);
+    console.log(`[Custom Token API] 📈 Phase 2: 獲取 ${volatilityDays} 天歷史數據並計算波動率...`);
     
     const historicalStartTime = Date.now();
-    const historicalPricesResult = await fetchHistoricalPrices(tokenId, 90); // 90 days
+    const historicalPricesResult = await fetchHistoricalPrices(tokenId, volatilityDays);
     const volatilityResult = calculateHistoricalVolatility(historicalPricesResult.data, historicalPricesResult.provider);
     const historicalDuration = Date.now() - historicalStartTime;
     
@@ -131,6 +143,7 @@ export async function GET(request: NextRequest) {
       annualized_volatility: volatilityResult.annualizedVolatility,
       historical_api_provider: historicalPricesResult.provider,
       historical_data_cached: historicalPricesResult.cached || false,
+      historical_days: volatilityDays,
       duration: historicalDuration
     });
     
@@ -211,7 +224,8 @@ export async function GET(request: NextRequest) {
         annualizedVolatility: volatilityResult.annualizedVolatility * 100,
         dailyVolatility: volatilityResult.dailyVolatility * 100,
         dataPoints: volatilityResult.dataPoints,
-        historicalDays: historicalPricesResult.data.length,
+        historicalDays: volatilityDays,
+        actualDataPoints: historicalPricesResult.data.length,
         apiProvider: historicalPricesResult.provider,
         cached: historicalPricesResult.cached || false
       },

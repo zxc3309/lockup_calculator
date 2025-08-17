@@ -150,6 +150,11 @@ export default function HistoricalVolatilityResults({
             <p className="text-purple-900 font-bold">
               {calculation.impliedVolatility?.toFixed(1)}%
             </p>
+            {volatilityData?.historicalDays && (
+              <p className="text-purple-600 text-xs">
+                {volatilityData.historicalDays}天數據
+              </p>
+            )}
           </div>
         </div>
         {treasuryRateInfo && (
@@ -301,7 +306,7 @@ export default function HistoricalVolatilityResults({
                   <div className="flex justify-between p-3 bg-blue-50 rounded">
                     <span>1. 歷史波動率計算:</span>
                     <span className="font-medium">
-                      90天歷史數據 → {calculation.impliedVolatility?.toFixed(1)}% 年化
+                      {volatilityData?.historicalDays || 90}天歷史數據 → {calculation.impliedVolatility?.toFixed(1)}% 年化
                     </span>
                   </div>
                   <div className="flex justify-between p-3 bg-blue-50 rounded">
@@ -340,6 +345,12 @@ export default function HistoricalVolatilityResults({
                       <span className="text-gray-600">覆蓋天數:</span>
                       <span className="font-medium">{volatilityData.historicalDays} 天</span>
                     </div>
+                    {volatilityData.actualDataPoints && (
+                      <div className="flex justify-between p-3 bg-gray-50 rounded">
+                        <span className="text-gray-600">實際數據點:</span>
+                        <span className="font-medium">{volatilityData.actualDataPoints}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

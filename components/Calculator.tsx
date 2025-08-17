@@ -128,8 +128,9 @@ export default function Calculator() {
   
   // 歷史波動率計算方法
   const calculateWithHistoricalVolatility = async () => {
+    const volatilityDays = customTokenInput!.volatilityDays || 90;
     const response = await fetch(
-      `/api/custom-token?tokenId=${customTokenInput!.symbol}&period=${customTokenInput!.period}&targetPrice=${customTokenInput!.targetPrice}`
+      `/api/custom-token?tokenId=${customTokenInput!.symbol}&period=${customTokenInput!.period}&targetPrice=${customTokenInput!.targetPrice}&volatilityDays=${volatilityDays}`
     );
     
     if (!response.ok) {
@@ -190,8 +191,9 @@ export default function Calculator() {
     
     // 同時獲取歷史波動率結果作為比較
     try {
+      const volatilityDays = customTokenInput!.volatilityDays || 90;
       const historicalResponse = await fetch(
-        `/api/custom-token?tokenId=${customTokenInput!.symbol}&period=${customTokenInput!.period}&targetPrice=${customTokenInput!.targetPrice}`
+        `/api/custom-token?tokenId=${customTokenInput!.symbol}&period=${customTokenInput!.period}&targetPrice=${customTokenInput!.targetPrice}&volatilityDays=${volatilityDays}`
       );
       
       if (historicalResponse.ok) {
