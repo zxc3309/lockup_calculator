@@ -19,14 +19,14 @@ export default function DebugPanel({ debugInfo, isVisible, onToggle }: DebugPane
           onClick={onToggle}
           className="text-sm text-gray-600 hover:text-gray-800"
         >
-          🔍 調試模式 (無數據)
+          🔍 Debug Mode (no data)
         </button>
       </div>
     );
   }
 
   const formatDuration = (ms: number) => `${ms}ms`;
-  const formatTimestamp = (timestamp: Date) => timestamp.toLocaleTimeString('zh-TW');
+  const formatTimestamp = (timestamp: Date) => timestamp.toLocaleTimeString('en-US');
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -44,7 +44,7 @@ export default function DebugPanel({ debugInfo, isVisible, onToggle }: DebugPane
   };
 
   const renderApiStatus = (apiCall: ApiCallStatus | null, name: string) => {
-    if (!apiCall) return <span className="text-gray-400">未調用</span>;
+    if (!apiCall) return <span className="text-gray-400">Not called</span>;
 
     return (
       <div className="flex items-center space-x-2">
@@ -62,31 +62,31 @@ export default function DebugPanel({ debugInfo, isVisible, onToggle }: DebugPane
   const OverviewTab = () => (
     <div className="space-y-4">
       <div>
-        <h4 className="font-medium mb-2">API 調用狀態</h4>
+        <h4 className="font-medium mb-2">API Status</h4>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span>現貨價格:</span>
+            <span>Spot Price:</span>
             {renderApiStatus(debugInfo.dataFetchStatus.spotPrice, 'Spot Price')}
           </div>
           <div className="flex justify-between">
-            <span>選擇權數據:</span>
+            <span>Options Data:</span>
             {renderApiStatus(debugInfo.dataFetchStatus.optionsData, 'Options Data')}
           </div>
         </div>
       </div>
 
       <div>
-        <h4 className="font-medium mb-2">計算參數</h4>
+        <h4 className="font-medium mb-2">Parameters</h4>
         <div className="bg-gray-50 p-3 rounded text-sm font-mono">
-          <div>無風險利率: {(debugInfo.parameters.riskFreeRate * 100).toFixed(2)}%</div>
-          <div>到期時間: {debugInfo.parameters.timeToExpiry.toFixed(4)} 年</div>
-          <div>鎖倉天數: {debugInfo.parameters.lockupDays} 天</div>
+          <div>Risk-free rate: {(debugInfo.parameters.riskFreeRate * 100).toFixed(2)}%</div>
+          <div>Time to expiry: {debugInfo.parameters.timeToExpiry.toFixed(4)} yr</div>
+          <div>Lockup days: {debugInfo.parameters.lockupDays} days</div>
         </div>
       </div>
 
       {debugInfo.warnings.length > 0 && (
         <div>
-          <h4 className="font-medium mb-2 text-yellow-600">⚠️ 警告</h4>
+          <h4 className="font-medium mb-2 text-yellow-600">⚠️ Warnings</h4>
           <ul className="text-sm text-yellow-700 space-y-1">
             {debugInfo.warnings.map((warning, index) => (
               <li key={index}>• {warning}</li>
@@ -123,7 +123,7 @@ export default function DebugPanel({ debugInfo, isVisible, onToggle }: DebugPane
           
           {step.input && (
             <details className="text-sm">
-              <summary className="cursor-pointer text-gray-600">輸入參數</summary>
+              <summary className="cursor-pointer text-gray-600">Inputs</summary>
               <pre className="bg-gray-50 p-2 mt-1 rounded overflow-x-auto">
                 {JSON.stringify(step.input, null, 2)}
               </pre>
@@ -132,7 +132,7 @@ export default function DebugPanel({ debugInfo, isVisible, onToggle }: DebugPane
           
           {step.output && (
             <details className="text-sm">
-              <summary className="cursor-pointer text-gray-600">輸出結果</summary>
+              <summary className="cursor-pointer text-gray-600">Output</summary>
               <pre className="bg-gray-50 p-2 mt-1 rounded overflow-x-auto">
                 {JSON.stringify(step.output, null, 2)}
               </pre>
@@ -141,7 +141,7 @@ export default function DebugPanel({ debugInfo, isVisible, onToggle }: DebugPane
           
           {step.errorMessage && (
             <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
-              錯誤: {step.errorMessage}
+              Error: {step.errorMessage}
             </div>
           )}
         </div>
@@ -153,9 +153,9 @@ export default function DebugPanel({ debugInfo, isVisible, onToggle }: DebugPane
     <div className="space-y-4">
       {debugInfo.rawData.spotPriceResponse && (
         <div>
-          <h4 className="font-medium mb-2">現貨價格響應</h4>
+          <h4 className="font-medium mb-2">Spot Price Response</h4>
           <details className="text-sm">
-            <summary className="cursor-pointer text-blue-600">查看原始數據</summary>
+            <summary className="cursor-pointer text-blue-600">View raw data</summary>
             <pre className="bg-gray-50 p-3 mt-2 rounded overflow-x-auto max-h-40">
               {JSON.stringify(debugInfo.rawData.spotPriceResponse, null, 2)}
             </pre>
@@ -165,9 +165,9 @@ export default function DebugPanel({ debugInfo, isVisible, onToggle }: DebugPane
 
       {debugInfo.rawData.optionsChainResponse && (
         <div>
-          <h4 className="font-medium mb-2">選擇權鏈響應</h4>
+          <h4 className="font-medium mb-2">Options Chain Response</h4>
           <details className="text-sm">
-            <summary className="cursor-pointer text-blue-600">查看原始數據</summary>
+            <summary className="cursor-pointer text-blue-600">View raw data</summary>
             <pre className="bg-gray-50 p-3 mt-2 rounded overflow-x-auto max-h-40">
               {JSON.stringify(debugInfo.rawData.optionsChainResponse, null, 2)}
             </pre>
@@ -177,7 +177,7 @@ export default function DebugPanel({ debugInfo, isVisible, onToggle }: DebugPane
 
       {debugInfo.rawData.selectedOptions && debugInfo.rawData.selectedOptions.length > 0 && (
         <div>
-          <h4 className="font-medium mb-2">篩選後的選擇權合約</h4>
+          <h4 className="font-medium mb-2">Filtered Option Contracts</h4>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
@@ -214,7 +214,7 @@ export default function DebugPanel({ debugInfo, isVisible, onToggle }: DebugPane
             className="flex items-center justify-between w-full text-left"
           >
             <span className="font-medium text-gray-700">
-              🔍 調試信息 ({formatTimestamp(debugInfo.timestamp)})
+              🔍 Debug Info ({formatTimestamp(debugInfo.timestamp)})
             </span>
             <span className="text-gray-500">
               {isVisible ? '▼' : '▶'}
@@ -226,9 +226,9 @@ export default function DebugPanel({ debugInfo, isVisible, onToggle }: DebugPane
           <div className="p-4">
             <div className="flex space-x-4 mb-4 border-b border-gray-200">
               {[
-                { key: 'overview', label: '概覽' },
-                { key: 'steps', label: '計算步驟' },
-                { key: 'data', label: '原始數據' },
+                { key: 'overview', label: 'Overview' },
+                { key: 'steps', label: 'Steps' },
+                { key: 'data', label: 'Raw Data' },
               ].map((tab) => (
                 <button
                   key={tab.key}

@@ -161,12 +161,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log(`[Treasury API] 🚀 獲取 ${period} 美國國庫券利率...`);
+    console.log(`[Treasury API] 🚀 Fetching ${period} U.S. Treasury rate...`);
 
     const treasuryData = await getTreasuryRate(period);
     const duration = Date.now() - startTime;
 
-    console.log(`[Treasury API] ✅ ${period} 利率: ${(treasuryData.rate * 100).toFixed(2)}% (來源: ${treasuryData.source}, 耗時: ${duration}ms)`);
+    console.log(`[Treasury API] ✅ ${period} rate: ${(treasuryData.rate * 100).toFixed(2)}% (source: ${treasuryData.source}, in ${duration}ms)`);
 
     return NextResponse.json({
       success: true,

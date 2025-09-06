@@ -12,7 +12,7 @@ export default function TokenModeSelector({ selectedMode, onModeChange }: TokenM
   return (
     <div className="mb-6">
       <label className="block text-sm font-medium text-gray-700 mb-3">
-        選擇計算模式
+        Select Calculation Mode
       </label>
       <div className="space-y-3">
         <div 
@@ -37,10 +37,10 @@ export default function TokenModeSelector({ selectedMode, onModeChange }: TokenM
             />
             <label htmlFor="market-data" className="ml-3 cursor-pointer">
               <div className="text-sm font-medium text-gray-900">
-                📊 BTC/ETH (期權市場數據)
+                📊 BTC/ETH (Options Market Data)
               </div>
               <div className="text-xs text-gray-600 mt-1">
-                使用Deribit真實期權價格，雙到期日方差外推法，高精度計算
+                Uses live Deribit options, dual-expiry variance extrapolation, high accuracy
               </div>
             </label>
           </div>
@@ -68,10 +68,10 @@ export default function TokenModeSelector({ selectedMode, onModeChange }: TokenM
             />
             <label htmlFor="historical-volatility" className="ml-3 cursor-pointer">
               <div className="text-sm font-medium text-gray-900">
-                💎 其他代幣 (歷史波動率)
+                💎 Other Tokens (Historical Volatility)
               </div>
               <div className="text-xs text-gray-600 mt-1">
-                基於歷史價格波動率和目標價格預期，適合VC投資場景
+                Based on historical price volatility and target price; fits VC use cases
               </div>
             </label>
           </div>
@@ -83,10 +83,10 @@ export default function TokenModeSelector({ selectedMode, onModeChange }: TokenM
           <div className="flex">
             <div className="ml-3">
               <p className="text-sm text-yellow-800">
-                <strong>💡 投資邏輯說明：</strong>
-                此模式適合對代幣長期價值有明確預期的投資者。通過設定目標價格，
-                系統將計算高執行價格Call期權的理論價值，反映您的看好程度。
-                目標價格越高於現價，折扣率越低。
+                <strong>💡 Investment logic:</strong>
+                This mode suits investors with a clear long-term view. By setting a target price,
+                we price an out-of-the-money Call option to reflect how bullish the view is.
+                Higher target vs spot implies a lower discount rate.
               </p>
             </div>
           </div>

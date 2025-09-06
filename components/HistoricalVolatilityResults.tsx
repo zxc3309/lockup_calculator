@@ -108,77 +108,77 @@ export default function HistoricalVolatilityResults({
 
   return (
     <div className="space-y-6">
-      {/* 標題 */}
+      {/* Title */}
       <div className="text-center">
         <h2 className="text-xl font-bold text-gray-900 mb-2">
-          💎 {customTokenInput.symbol.toUpperCase()} {customTokenInput.period} 鎖倉折扣率分析
+          💎 {customTokenInput.symbol.toUpperCase()} {customTokenInput.period} Lockup Discount Analysis
         </h2>
         <p className="text-sm text-gray-600">
-          基於歷史波動率和目標價格的Call期權定價方法
+          Call option pricing based on historical volatility and target price
           {volatilityData?.apiProvider && (
             <span className="ml-1">
-              (數據來源: {volatilityData.apiProvider.toUpperCase()})
+              (Source: {volatilityData.apiProvider.toUpperCase()})
             </span>
           )}
         </p>
       </div>
 
-      {/* 計算參數摘要 */}
+      {/* Calculation parameters */}
       <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-200">
         <h3 className="font-semibold text-purple-900 mb-3 flex items-center">
           <InformationCircleIcon className="w-5 h-5 mr-2" />
-          計算參數概覽
+          Parameters Summary
         </h3>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
           <div>
-            <span className="text-purple-700 font-medium">當前價格</span>
+            <span className="text-purple-700 font-medium">Current Price</span>
             <p className="text-purple-900 font-bold">{formatCurrency(spotPrice)}</p>
           </div>
           <div>
-            <span className="text-purple-700 font-medium">目標價格</span>
+            <span className="text-purple-700 font-medium">Target Price</span>
             <p className="text-purple-900 font-bold">{formatCurrency(customTokenInput.targetPrice)}</p>
             <p className="text-purple-600 text-xs">
-              {((customTokenInput.targetPrice / spotPrice - 1) * 100).toFixed(1)}% 上漲
+              {((customTokenInput.targetPrice / spotPrice - 1) * 100).toFixed(1)}% up
             </p>
           </div>
           <div>
-            <span className="text-purple-700 font-medium">鎖倉期限</span>
-            <p className="text-purple-900">{lockupDays} 天</p>
+            <span className="text-purple-700 font-medium">Lockup Period</span>
+            <p className="text-purple-900">{lockupDays} days</p>
           </div>
           <div>
-            <span className="text-purple-700 font-medium">歷史波動率</span>
+            <span className="text-purple-700 font-medium">Historical Volatility</span>
             <p className="text-purple-900 font-bold">
               {calculation.impliedVolatility?.toFixed(1)}%
             </p>
             {volatilityData?.historicalDays && (
               <p className="text-purple-600 text-xs">
-                {volatilityData.historicalDays}天數據
+                {volatilityData.historicalDays} days of data
               </p>
             )}
           </div>
         </div>
         {treasuryRateInfo && (
           <div className="mt-4 pt-3 border-t border-purple-200">
-            <span className="text-purple-700 font-medium text-sm">無風險利率: </span>
+            <span className="text-purple-700 font-medium text-sm">Risk-free rate: </span>
             <span className="text-purple-900 font-semibold">{treasuryRateInfo.displayText}</span>
             {treasuryRateInfo.source === 'FALLBACK' && (
-              <span className="ml-2 text-orange-600 text-xs">⚠️ 預設值</span>
+              <span className="ml-2 text-orange-600 text-xs">⚠️ Fallback</span>
             )}
             {treasuryRateInfo.source === 'FRED_API' && (
-              <span className="ml-2 text-green-600 text-xs">✅ 即時數據</span>
+              <span className="ml-2 text-green-600 text-xs">✅ Live</span>
             )}
           </div>
         )}
       </div>
 
-      {/* Call 折扣率主卡片 */}
+      {/* Call discount main card */}
       <div className="bg-gradient-to-br from-red-500 to-red-600 p-6 rounded-lg text-white shadow-lg">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             <ArrowTrendingUpIcon className="w-8 h-8" />
             <div>
-              <h3 className="text-xl font-semibold">Call 折扣率</h3>
-              <p className="text-red-100">基於目標價格的機會成本分析</p>
+              <h3 className="text-xl font-semibold">Call Discount Rate</h3>
+              <p className="text-red-100">Opportunity cost vs target price</p>
             </div>
           </div>
         </div>
@@ -188,22 +188,21 @@ export default function HistoricalVolatilityResults({
             {formatPercentage(callDiscount)}
           </div>
           <div className="text-red-100">
-            理論Call期權價值: {formatCurrency(callTheoretical)}
+            Theoretical Call Value: {formatCurrency(callTheoretical)}
           </div>
         </div>
         
         <p className="text-red-100">
-          基於您設定的目標價格 {formatCurrency(customTokenInput.targetPrice)}，
-          鎖倉的機會成本為 {formatPercentage(callDiscount)}。
-          這反映了如果代幣價格達到目標價格時，您可能錯過的潛在收益。
+          With target price {formatCurrency(customTokenInput.targetPrice)}, the lockup opportunity cost
+          is {formatPercentage(callDiscount)} — potential upside forgone if price reaches the target.
         </p>
       </div>
 
-      {/* 詳細分析 */}
+      {/* Detailed analysis */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h3 className="text-lg font-semibold mb-4 flex items-center">
           <ChartBarIcon className="w-5 h-5 mr-2 text-gray-600" />
-          Call折扣率詳細分析
+          Call Discount — Detailed Analysis
         </h3>
         
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -211,45 +210,44 @@ export default function HistoricalVolatilityResults({
             <div className="text-2xl font-bold text-gray-900 break-words">
               {formatPercentage(callDiscount)}
             </div>
-            <div className="text-sm text-gray-600">Call 折扣率</div>
+            <div className="text-sm text-gray-600">Call Discount</div>
           </div>
           
           <div className="text-center p-4 bg-gray-50 rounded-lg">
             <div className="text-2xl font-bold text-gray-900 break-words">
               {formatPercentage(callAnnualizedRate)}
             </div>
-            <div className="text-sm text-gray-600">年化折扣率</div>
+            <div className="text-sm text-gray-600">Annualized Rate</div>
           </div>
           
           <div className="text-center p-4 bg-gray-50 rounded-lg">
             <div className="text-2xl font-bold text-gray-900">
               {formatCurrency(callFairValue)}
             </div>
-            <div className="text-sm text-gray-600">合理購買價格</div>
+            <div className="text-sm text-gray-600">Fair Value</div>
           </div>
           
           <div className="text-center p-4 bg-gray-50 rounded-lg">
             <div className="text-2xl font-bold text-gray-900">
               {formatCurrency(callTheoretical)}
             </div>
-            <div className="text-sm text-gray-600">理論Call價格</div>
+            <div className="text-sm text-gray-600">Theoretical Call Price</div>
           </div>
         </div>
 
-        {/* 投資建議 */}
+        {/* Investment note */}
         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-          <h4 className="font-medium text-yellow-900 mb-2">💡 VC投資邏輯分析</h4>
+          <h4 className="font-medium text-yellow-900 mb-2">💡 VC Investment Logic</h4>
           <p className="text-sm text-yellow-800">
-            <strong>目標價格設定</strong>: {formatPercentage(callDiscount)} 
-            反映了基於您對 {customTokenInput.symbol.toUpperCase()} 
-            長期價值判斷({formatCurrency(customTokenInput.targetPrice)})的機會成本。
-            目標倍數越高，反映的折扣率越低，表示您對該代幣的看好程度越強。
-            適合與其他VC投資項目的預期收益進行比較。
+            <strong>Target setting</strong>: {formatPercentage(callDiscount)} reflects the opportunity cost implied by your
+            long-term view on {customTokenInput.symbol.toUpperCase()} ({formatCurrency(customTokenInput.targetPrice)}).
+            Higher target multiples imply lower discount rates — stronger bullish conviction. Useful to compare against
+            other VC opportunities.
           </p>
         </div>
       </div>
 
-      {/* 計算過程詳情 */}
+      {/* Calculation details */}
       <div className="bg-white rounded-lg border border-gray-200">
         <div className="p-4 border-b border-gray-200">
           <button
@@ -257,10 +255,10 @@ export default function HistoricalVolatilityResults({
             className="w-full flex items-center justify-between text-left"
           >
             <h3 className="text-lg font-semibold text-gray-900">
-              🧮 計算過程詳情
+              🧮 Calculation Details
             </h3>
             <span className="text-sm text-gray-500">
-              {showCalculationDetails ? '隱藏詳情' : '顯示詳情'}
+              {showCalculationDetails ? 'Hide details' : 'Show details'}
             </span>
           </button>
         </div>
@@ -268,86 +266,86 @@ export default function HistoricalVolatilityResults({
         {showCalculationDetails && (
           <div className="p-4">
             <div className="space-y-4">
-              {/* Black-Scholes 參數 */}
+              {/* Black-Scholes parameters */}
               <div>
-                <h4 className="font-medium text-gray-900 mb-3">📊 Black-Scholes 計算參數</h4>
+                <h4 className="font-medium text-gray-900 mb-3">📊 Black-Scholes Parameters</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
                   <div className="flex justify-between p-3 bg-gray-50 rounded">
-                    <span className="text-gray-600">S (當前價格):</span>
+                    <span className="text-gray-600">S (Spot):</span>
                     <span className="font-medium">{formatCurrency(spotPrice)}</span>
                   </div>
                   <div className="flex justify-between p-3 bg-gray-50 rounded">
-                    <span className="text-gray-600">K (執行價格):</span>
+                    <span className="text-gray-600">K (Strike):</span>
                     <span className="font-medium">{formatCurrency(customTokenInput.targetPrice)}</span>
                   </div>
                   <div className="flex justify-between p-3 bg-gray-50 rounded">
-                    <span className="text-gray-600">T (時間到期):</span>
-                    <span className="font-medium">{(lockupDays / 365).toFixed(3)} 年</span>
+                    <span className="text-gray-600">T (Time to expiry):</span>
+                    <span className="font-medium">{(lockupDays / 365).toFixed(3)} yr</span>
                   </div>
                   <div className="flex justify-between p-3 bg-gray-50 rounded">
-                    <span className="text-gray-600">σ (波動率):</span>
+                    <span className="text-gray-600">σ (Volatility):</span>
                     <span className="font-medium">{calculation.impliedVolatility?.toFixed(1)}%</span>
                   </div>
                   <div className="flex justify-between p-3 bg-gray-50 rounded">
-                    <span className="text-gray-600">r (無風險利率):</span>
-                    <span className="font-medium">{treasuryRateInfo ? (treasuryRateInfo.rate * 100).toFixed(2) + '%' : '載入中...'}</span>
+                    <span className="text-gray-600">r (Risk-free rate):</span>
+                    <span className="font-medium">{treasuryRateInfo ? (treasuryRateInfo.rate * 100).toFixed(2) + '%' : 'Loading...'}</span>
                   </div>
                   <div className="flex justify-between p-3 bg-green-50 rounded border border-green-200">
-                    <span className="text-gray-600">Call期權價格:</span>
+                    <span className="text-gray-600">Call price:</span>
                     <span className="font-bold text-green-700">{formatCurrency(callTheoretical)}</span>
                   </div>
                 </div>
               </div>
 
-              {/* 計算步驟 */}
+              {/* Steps */}
               <div>
-                <h4 className="font-medium text-gray-900 mb-3">🔄 計算步驟</h4>
+                <h4 className="font-medium text-gray-900 mb-3">🔄 Steps</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between p-3 bg-blue-50 rounded">
-                    <span>1. 歷史波動率計算:</span>
+                    <span>1. Historical volatility:</span>
                     <span className="font-medium">
-                      {volatilityData?.historicalDays || 90}天歷史數據 → {calculation.impliedVolatility?.toFixed(1)}% 年化
+                      {volatilityData?.historicalDays || 90} days → {calculation.impliedVolatility?.toFixed(1)}% annualized
                     </span>
                   </div>
                   <div className="flex justify-between p-3 bg-blue-50 rounded">
-                    <span>2. Black-Scholes期權定價:</span>
+                    <span>2. Black-Scholes pricing:</span>
                     <span className="font-medium">
-                      Call價格 = {formatCurrency(callTheoretical)}
+                      Call price = {formatCurrency(callTheoretical)}
                     </span>
                   </div>
                   <div className="flex justify-between p-3 bg-blue-50 rounded">
-                    <span>3. 折扣率計算:</span>
+                    <span>3. Discount calculation:</span>
                     <span className="font-medium">
                       {formatCurrency(callTheoretical)} ÷ {formatCurrency(spotPrice)} = {formatPercentage(callDiscount)}
                     </span>
                   </div>
                   <div className="flex justify-between p-3 bg-green-50 rounded border border-green-200">
-                    <span className="font-medium">最終折扣率:</span>
+                    <span className="font-medium">Final discount rate:</span>
                     <span className="font-bold text-green-700">{formatPercentage(callDiscount)}</span>
                   </div>
                 </div>
               </div>
 
-              {/* 數據品質信息 */}
+              {/* Data quality */}
               {volatilityData && (
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-3">📈 數據品質信息</h4>
+                  <h4 className="font-medium text-gray-900 mb-3">📈 Data Quality</h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div className="flex justify-between p-3 bg-gray-50 rounded">
-                      <span className="text-gray-600">數據來源:</span>
+                      <span className="text-gray-600">Source:</span>
                       <span className="font-medium">{volatilityData.apiProvider?.toUpperCase()}</span>
                     </div>
                     <div className="flex justify-between p-3 bg-gray-50 rounded">
-                      <span className="text-gray-600">歷史數據點數:</span>
+                      <span className="text-gray-600">Data points:</span>
                       <span className="font-medium">{volatilityData.dataPoints}</span>
                     </div>
                     <div className="flex justify-between p-3 bg-gray-50 rounded">
-                      <span className="text-gray-600">覆蓋天數:</span>
-                      <span className="font-medium">{volatilityData.historicalDays} 天</span>
+                      <span className="text-gray-600">Days covered:</span>
+                      <span className="font-medium">{volatilityData.historicalDays} days</span>
                     </div>
                     {volatilityData.actualDataPoints && (
                       <div className="flex justify-between p-3 bg-gray-50 rounded">
-                        <span className="text-gray-600">實際數據點:</span>
+                        <span className="text-gray-600">Actual points:</span>
                         <span className="font-medium">{volatilityData.actualDataPoints}</span>
                       </div>
                     )}

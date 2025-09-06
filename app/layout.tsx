@@ -5,8 +5,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'BTC/ETH 鎖倉Token折扣率計算器',
-  description: '計算Bitcoin和Ethereum鎖倉token的合理折扣率',
+  title: 'BTC/ETH Locked Token Discount Calculator',
+  description: 'Calculate fair discount rates for locked BTC and ETH tokens',
 }
 
 export default function RootLayout({
@@ -15,7 +15,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="zh-TW">
+    <html lang="en">
       <body className={inter.className}>{children}</body>
     </html>
   )

@@ -94,7 +94,7 @@ const DiscountCard = ({
       </div>
       {theoreticalPrice && (
         <div className={`text-sm ${isSelected ? 'text-white text-opacity-80' : 'text-gray-600'}`}>
-          理論價格: {formatCurrency(theoreticalPrice)}
+          Theoretical Price: {formatCurrency(theoreticalPrice)}
         </div>
       )}
     </div>
@@ -130,18 +130,18 @@ const ContractTable = ({
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-gray-200 bg-gray-50">
-              <th className="text-left py-2 px-2">執行價格</th>
-              <th className="text-right py-2 px-2">ATM距離</th>
-              <th className="text-right py-2 px-2">Call價格</th>
-              <th className="text-right py-2 px-2">Put價格</th>
+              <th className="text-left py-2 px-2">Strike</th>
+              <th className="text-right py-2 px-2">ATM Dist.</th>
+              <th className="text-right py-2 px-2">Call Price</th>
+              <th className="text-right py-2 px-2">Put Price</th>
               {showDiscounts && (
                 <>
-                  <th className="text-right py-2 px-2">Call折扣</th>
-                  <th className="text-right py-2 px-2">Put折扣</th>
+                  <th className="text-right py-2 px-2">Call Discount</th>
+                  <th className="text-right py-2 px-2">Put Discount</th>
                 </>
               )}
-              <th className="text-right py-2 px-2">市場IV</th>
-              <th className="text-right py-2 px-2">權重</th>
+              <th className="text-right py-2 px-2">Market IV</th>
+              <th className="text-right py-2 px-2">Weight</th>
             </tr>
           </thead>
           <tbody>
@@ -244,90 +244,90 @@ export default function DiscountResults({
 
   return (
     <div className="space-y-6">
-      {/* 計算方法標題 */}
+      {/* Calculation header */}
       <div className="text-center">
         <h2 className="text-xl font-bold text-gray-900 mb-2">
-          📊 {token} {period} 鎖倉折扣率分析
+          📊 {token} {period} Lockup Discount Analysis
         </h2>
         <p className="text-sm text-gray-600">
-          {dualExpiryInfo ? '雙到期日方差外推法' : '多合約ATM加權平均'}
+          {dualExpiryInfo ? 'Dual-Expiry Variance Extrapolation' : 'Multi-ATM Weighted Average'}
           {calculation.totalContracts && (
-            <span className="ml-1">({calculation.totalContracts}個ATM合約)</span>
+            <span className="ml-1">({calculation.totalContracts} ATM contracts)</span>
           )}
         </p>
       </div>
 
-      {/* 計算基準資訊 (如果有雙到期日數據) */}
+      {/* Baseline info (if dual-expiry data exists) */}
       {dualExpiryInfo && (
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
           <h3 className="font-semibold text-blue-900 mb-3 flex items-center">
             <InformationCircleIcon className="w-5 h-5 mr-2" />
-            計算基準資訊
+            Baseline Information
           </h3>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
             <div>
-              <span className="text-blue-700 font-medium">策略</span>
+              <span className="text-blue-700 font-medium">Strategy</span>
               <p className="text-blue-900">
-                {dualExpiryInfo.strategy === 'interpolation' ? '內插法' :
-                 dualExpiryInfo.strategy === 'extrapolation' ? '外推法' : '有界外推法'}
+                {dualExpiryInfo.strategy === 'interpolation' ? 'Interpolation' :
+                 dualExpiryInfo.strategy === 'extrapolation' ? 'Extrapolation' : 'Bounded Extrapolation'}
               </p>
             </div>
             <div>
-              <span className="text-blue-700 font-medium">目標期限</span>
-              <p className="text-blue-900">{(dualExpiryInfo.targetTimeToExpiry * 365).toFixed(0)}天</p>
+              <span className="text-blue-700 font-medium">Target Tenor</span>
+              <p className="text-blue-900">{(dualExpiryInfo.targetTimeToExpiry * 365).toFixed(0)} days</p>
             </div>
             <div>
-              <span className="text-blue-700 font-medium">短期到期</span>
+              <span className="text-blue-700 font-medium">Short Expiry</span>
               <p className="text-blue-900">{dualExpiryInfo.shortTermExpiry}</p>
               <p className="text-blue-700 text-xs">IV: {dualExpiryInfo.shortTermIV.toFixed(1)}%</p>
             </div>
             <div>
-              <span className="text-blue-700 font-medium">長期到期</span>
+              <span className="text-blue-700 font-medium">Long Expiry</span>
               <p className="text-blue-900">{dualExpiryInfo.longTermExpiry}</p>
               <p className="text-blue-700 text-xs">IV: {dualExpiryInfo.longTermIV.toFixed(1)}%</p>
             </div>
           </div>
           <div className="mt-4 pt-3 border-t border-blue-200">
-            <span className="text-blue-700 font-medium text-sm">外推隱含波動率: </span>
+            <span className="text-blue-700 font-medium text-sm">Extrapolated IV: </span>
             <span className="text-blue-900 font-bold text-lg">{calculation.impliedVolatility?.toFixed(1)}%</span>
           </div>
           {treasuryRateInfo && (
             <div className="mt-2">
-              <span className="text-blue-700 font-medium text-sm">無風險利率: </span>
+              <span className="text-blue-700 font-medium text-sm">Risk-free rate: </span>
               <span className="text-blue-900 font-semibold">{treasuryRateInfo.displayText}</span>
               {treasuryRateInfo.source === 'FALLBACK' && (
-                <span className="ml-1 text-orange-600 text-xs">⚠️ 預設值</span>
+                <span className="ml-1 text-orange-600 text-xs">⚠️ Fallback</span>
               )}
             </div>
           )}
         </div>
       )}
 
-      {/* 無風險利率信息 (單一到期日時顯示) */}
+      {/* Risk-free rate (when single-expiry method is used) */}
       {!dualExpiryInfo && treasuryRateInfo && (
         <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <InformationCircleIcon className="w-5 h-5 mr-2 text-gray-600" />
-              <span className="text-gray-700 font-medium text-sm">計算基準利率</span>
+              <span className="text-gray-700 font-medium text-sm">Reference Rate</span>
             </div>
             <div className="text-right">
               <span className="text-gray-900 font-semibold">{treasuryRateInfo.displayText}</span>
               {treasuryRateInfo.source === 'FALLBACK' && (
-                <span className="ml-2 text-orange-600 text-xs">⚠️ 預設值</span>
+                <span className="ml-2 text-orange-600 text-xs">⚠️ Fallback</span>
               )}
             </div>
           </div>
         </div>
       )}
 
-      {/* Call vs Put 折扣卡片 */}
+      {/* Call vs Put discount cards */}
       <div className="grid md:grid-cols-2 gap-6">
         <DiscountCard
-          title="Call 折扣率"
-          subtitle="機會成本分析"
+          title="Call Discount Rate"
+          subtitle="Opportunity Cost"
           value={callDiscount}
-          description="鎖倉期間錯過上漲潛在收益的代價。適合評估牛市中鎖倉是否划算。"
+          description="Cost of missing upside during lockup. Useful in bullish scenarios."
           theoreticalPrice={callTheoretical}
           icon={<ArrowTrendingUpIcon className="w-6 h-6 text-red-600" />}
           colorClass="bg-gradient-to-br from-red-500 to-red-600"
@@ -336,10 +336,10 @@ export default function DiscountResults({
         />
 
         <DiscountCard
-          title="Put 折扣率"
-          subtitle="保險成本分析"
+          title="Put Discount Rate"
+          subtitle="Hedging Cost"
           value={putDiscount}
-          description="防止價格下跌所需支付的保險費用。適合風險厭惡投資者參考。"
+          description="Insurance cost to protect against downside. Useful for risk-averse investors."
           theoreticalPrice={putTheoretical}
           icon={<ShieldCheckIcon className="w-6 h-6 text-green-600" />}
           colorClass="bg-gradient-to-br from-green-500 to-green-600"
@@ -348,11 +348,11 @@ export default function DiscountResults({
         />
       </div>
 
-      {/* 選中折扣的詳細分析 */}
+      {/* Selected discount detailed analysis */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h3 className="text-lg font-semibold mb-4 flex items-center">
           <ChartBarIcon className="w-5 h-5 mr-2 text-gray-600" />
-          {selectedDiscount === 'call' ? 'Call折扣率' : 'Put折扣率'} 詳細分析
+          {selectedDiscount === 'call' ? 'Call Discount Rate' : 'Put Discount Rate'} — Detailed Analysis
         </h3>
         
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -361,7 +361,7 @@ export default function DiscountResults({
               {formatPercentage(selectedDiscount === 'call' ? callDiscount : putDiscount)}
             </div>
             <div className="text-sm text-gray-600">
-              {selectedDiscount === 'call' ? 'Call' : 'Put'} 折扣率
+              {selectedDiscount === 'call' ? 'Call' : 'Put'} Discount
             </div>
           </div>
           
@@ -369,14 +369,14 @@ export default function DiscountResults({
             <div className="text-2xl font-bold text-gray-900">
               {formatPercentage(selectedDiscount === 'call' ? callAnnualizedRate : putAnnualizedRate)}
             </div>
-            <div className="text-sm text-gray-600">年化折扣率</div>
+            <div className="text-sm text-gray-600">Annualized Rate</div>
           </div>
           
           <div className="text-center p-4 bg-gray-50 rounded-lg">
             <div className="text-2xl font-bold text-gray-900">
               {formatCurrency(selectedDiscount === 'call' ? callFairValue : putFairValue)}
             </div>
-            <div className="text-sm text-gray-600">合理購買價格</div>
+            <div className="text-sm text-gray-600">Fair Value</div>
           </div>
           
           <div className="text-center p-4 bg-gray-50 rounded-lg">
@@ -384,33 +384,33 @@ export default function DiscountResults({
               {formatCurrency(selectedDiscount === 'call' ? callTheoretical : putTheoretical)}
             </div>
             <div className="text-sm text-gray-600">
-              理論{selectedDiscount === 'call' ? 'Call' : 'Put'}價格
+              Theoretical {selectedDiscount === 'call' ? 'Call' : 'Put'} Price
             </div>
           </div>
         </div>
 
-        {/* 投資建議 */}
+        {/* Investment note */}
         <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
-          <h4 className="font-medium text-blue-900 mb-2">💡 投資建議</h4>
+          <h4 className="font-medium text-blue-900 mb-2">💡 Investment Note</h4>
           <p className="text-sm text-blue-800">
             {selectedDiscount === 'call' ? (
               <>
-                <strong>機會成本觀點</strong>: {formatPercentage(callDiscount)} 代表鎖倉期間可能錯過的上漲收益。
-                如果您預期 {token} 在 {period} 內的上漲幅度超過此折扣率，則鎖倉可能不是最佳選擇。
-                適合與 Staking 收益率或其他 DeFi 收益進行比較。
+                <strong>Opportunity cost view</strong>: {formatPercentage(callDiscount)} represents potential upside missed during lockup.
+                If you expect {token} to rise more than this over {period}, lockup may be suboptimal.
+                Compare with staking APY or other DeFi yields.
               </>
             ) : (
               <>
-                <strong>風險控制觀點</strong>: {formatPercentage(putDiscount)} 代表為防止下跌而支付的保險成本。
-                如果您擔心 {token} 價格大幅下跌，此成本可視為風險對沖的合理支出。
-                適合風險厭惡的投資者作為保護策略參考。
+                <strong>Risk control view</strong>: {formatPercentage(putDiscount)} represents insurance cost against downside.
+                If you worry about sharp drawdowns in {token}, this can be a reasonable hedging expense.
+                Useful for risk-averse investors as a protection reference.
               </>
             )}
           </p>
         </div>
       </div>
 
-      {/* 數據透明度展示 */}
+      {/* Data transparency */}
       <div className="bg-white rounded-lg border border-gray-200">
         <div className="p-4 border-b border-gray-200">
           <button
@@ -418,10 +418,10 @@ export default function DiscountResults({
             className="w-full flex items-center justify-between text-left"
           >
             <h3 className="text-lg font-semibold text-gray-900">
-              📋 原始市場數據
+              📋 Raw Market Data
             </h3>
             <span className="text-sm text-gray-500">
-              {showDetails ? '隱藏詳情' : '顯示詳情'}
+              {showDetails ? 'Hide details' : 'Show details'}
             </span>
           </button>
         </div>
@@ -432,31 +432,31 @@ export default function DiscountResults({
               <>
                 <ContractTable
                   contracts={calculation.rawShortTermContracts}
-                  title={`短期到期日: ${dualExpiryInfo.shortTermExpiry}`}
+                  title={`Short Expiry: ${dualExpiryInfo.shortTermExpiry}`}
                   spotPrice={spotPrice}
                   showDiscounts={true}
                 />
                 <ContractTable
                   contracts={calculation.rawLongTermContracts}
-                  title={`長期到期日: ${dualExpiryInfo.longTermExpiry}`}
+                  title={`Long Expiry: ${dualExpiryInfo.longTermExpiry}`}
                   spotPrice={spotPrice}
                   showDiscounts={true}
                 />
               </>
             ) : calculation.atmCalculations ? (
               <div>
-                <h5 className="font-medium mb-3 text-sm text-gray-700">ATM合約明細</h5>
+                <h5 className="font-medium mb-3 text-sm text-gray-700">ATM Contracts</h5>
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="border-b border-gray-200 bg-gray-50">
-                        <th className="text-left py-2 px-2">執行價格</th>
-                        <th className="text-left py-2 px-2">到期日</th>
-                        <th className="text-right py-2 px-2">ATM距離</th>
-                        <th className="text-right py-2 px-2">Call折扣</th>
-                        <th className="text-right py-2 px-2">Put折扣</th>
-                        <th className="text-right py-2 px-2">隱含波動率</th>
-                        <th className="text-right py-2 px-2">權重</th>
+                        <th className="text-left py-2 px-2">Strike</th>
+                        <th className="text-left py-2 px-2">Expiry</th>
+                        <th className="text-right py-2 px-2">ATM Dist.</th>
+                        <th className="text-right py-2 px-2">Call Disc.</th>
+                        <th className="text-right py-2 px-2">Put Disc.</th>
+                        <th className="text-right py-2 px-2">Implied Vol</th>
+                        <th className="text-right py-2 px-2">Weight</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -482,24 +482,24 @@ export default function DiscountResults({
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-gray-500">暫無詳細合約數據</p>
+              <p className="text-sm text-gray-500">No detailed contract data</p>
             )}
 
-            {/* 市場參數摘要 */}
+            {/* Market parameters summary */}
             {calculation.impliedVolatility !== undefined && (
               <div className="mt-6 pt-4 border-t border-gray-200">
-                <h5 className="font-medium mb-3 text-sm text-gray-700">加權平均市場參數</h5>
+                <h5 className="font-medium mb-3 text-sm text-gray-700">Weighted Market Parameters</h5>
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-600">隱含波動率:</span>
+                    <span className="text-gray-600">Implied Volatility:</span>
                     <span className="ml-2 font-medium">{calculation.impliedVolatility.toFixed(1)}%</span>
                   </div>
                   <div>
-                    <span className="text-gray-600">理論Call價格:</span>
+                    <span className="text-gray-600">Theoretical Call Price:</span>
                     <span className="ml-2 font-medium">{formatCurrency(callTheoretical)}</span>
                   </div>
                   <div>
-                    <span className="text-gray-600">理論Put價格:</span>
+                    <span className="text-gray-600">Theoretical Put Price:</span>
                     <span className="ml-2 font-medium">{formatCurrency(putTheoretical)}</span>
                   </div>
                 </div>

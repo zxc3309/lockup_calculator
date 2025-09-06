@@ -74,13 +74,13 @@ export default function BetaImpliedVolatilityResults({
 
   return (
     <div className="space-y-6">
-      {/* 標題 */}
+      {/* Title */}
       <div className="text-center">
         <h2 className="text-xl font-bold text-gray-900 mb-2">
-          🚀 {customTokenInput.symbol.toUpperCase()} {customTokenInput.period} BTC隱含波動率推導分析
+          🚀 {customTokenInput.symbol.toUpperCase()} {customTokenInput.period} BTC-Implied Volatility Derived Analysis
         </h2>
         <p className="text-sm text-gray-600">
-          基於BTC選擇權市場預期和Beta係數的折扣率計算
+          Discount derived from BTC options market expectations and beta
         </p>
       </div>
 
@@ -89,15 +89,15 @@ export default function BetaImpliedVolatilityResults({
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
           <h3 className="font-semibold text-blue-900 mb-3 flex items-center">
             <ScaleIcon className="w-5 h-5 mr-2" />
-            Beta係數分析
+            Beta Analysis
           </h3>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
             <div>
-              <span className="text-blue-700 font-medium">Beta係數</span>
+              <span className="text-blue-700 font-medium">Beta</span>
               <p className="text-blue-900 font-bold text-lg">{betaAnalysis?.betaAnalysis?.beta?.toFixed(3) || 'N/A'}</p>
             </div>
             <div>
-              <span className="text-blue-700 font-medium">相關性</span>
+              <span className="text-blue-700 font-medium">Correlation</span>
               <p className="text-blue-900 font-bold">{betaAnalysis?.betaAnalysis?.correlation ? (betaAnalysis.betaAnalysis.correlation * 100).toFixed(1) + '%' : 'N/A'}</p>
             </div>
             <div>
@@ -105,13 +105,13 @@ export default function BetaImpliedVolatilityResults({
               <p className="text-blue-900 font-bold">{betaAnalysis?.betaAnalysis?.rSquared ? (betaAnalysis.betaAnalysis.rSquared * 100).toFixed(1) + '%' : 'N/A'}</p>
             </div>
             <div>
-              <span className="text-blue-700 font-medium">信心水準</span>
+              <span className="text-blue-700 font-medium">Confidence</span>
               <p className={`font-bold ${
                 betaAnalysis?.volatilityComparison?.confidence === 'high' ? 'text-green-700' :
                 betaAnalysis?.volatilityComparison?.confidence === 'medium' ? 'text-yellow-700' : 'text-red-700'
               }`}>
-                {betaAnalysis?.volatilityComparison?.confidence === 'high' ? '高' :
-                 betaAnalysis?.volatilityComparison?.confidence === 'medium' ? '中' : '低'}
+                {betaAnalysis?.volatilityComparison?.confidence === 'high' ? 'High' :
+                 betaAnalysis?.volatilityComparison?.confidence === 'medium' ? 'Medium' : 'Low'}
               </p>
             </div>
           </div>
@@ -120,40 +120,40 @@ export default function BetaImpliedVolatilityResults({
             onClick={() => setShowBetaDetails(!showBetaDetails)}
             className="mt-3 text-sm text-blue-600 hover:text-blue-800"
           >
-            {showBetaDetails ? '隱藏Beta詳情' : '顯示Beta詳情'}
+            {showBetaDetails ? 'Hide Beta details' : 'Show Beta details'}
           </button>
           
           {showBetaDetails && betaAnalysis && (
             <div className="mt-4 pt-3 border-t border-blue-200 space-y-2 text-sm">
               <div className="flex justify-between">
-                <span>BTC波動率:</span>
+                <span>BTC volatility:</span>
                 <span className="font-medium">{betaAnalysis.betaAnalysis?.btcVolatility?.toFixed(1)}%</span>
               </div>
               <div className="flex justify-between">
-                <span>小幣波動率:</span>
+                <span>Altcoin volatility:</span>
                 <span className="font-medium">{betaAnalysis.betaAnalysis?.altcoinVolatility?.toFixed(1)}%</span>
               </div>
               <div className="flex justify-between">
-                <span>數據點數:</span>
+                <span>Data points:</span>
                 <span className="font-medium">{betaAnalysis.betaAnalysis?.dataPoints}</span>
               </div>
               <div className="flex justify-between">
-                <span>計算期間:</span>
-                <span className="font-medium">{betaAnalysis.betaAnalysis?.calculationPeriodDays}天</span>
+                <span>Period:</span>
+                <span className="font-medium">{betaAnalysis.betaAnalysis?.calculationPeriodDays} days</span>
               </div>
             </div>
           )}
         </div>
       )}
 
-      {/* Call折扣率主卡片 */}
+      {/* Call discount main card */}
       <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-lg text-white shadow-lg">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             <ArrowTrendingUpIcon className="w-8 h-8" />
             <div>
-              <h3 className="text-xl font-semibold">BTC隱含波動率折扣率</h3>
-              <p className="text-purple-100">整合市場預期的折扣率計算</p>
+              <h3 className="text-xl font-semibold">BTC-Implied Vol Discount</h3>
+              <p className="text-purple-100">Market-implied discount</p>
             </div>
           </div>
         </div>
@@ -163,13 +163,13 @@ export default function BetaImpliedVolatilityResults({
             {formatPercentage(callDiscount)}
           </div>
           <div className="text-purple-100">
-            理論Call期權價值: {formatCurrency(callTheoretical)}
+            Theoretical Call Value: {formatCurrency(callTheoretical)}
           </div>
         </div>
         
         <p className="text-purple-100">
-          基於BTC選擇權市場隱含波動率({betaAnalysis?.btcImpliedVolatility?.impliedVolatility?.toFixed(1)}%)
-          和Beta係數({betaAnalysis?.betaAnalysis?.beta?.toFixed(3)})推導的折扣率。
+          Discount derived from BTC implied volatility ({betaAnalysis?.btcImpliedVolatility?.impliedVolatility?.toFixed(1)}%)
+          and beta ({betaAnalysis?.betaAnalysis?.beta?.toFixed(3)}).
         </p>
       </div>
 
@@ -178,24 +178,24 @@ export default function BetaImpliedVolatilityResults({
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center">
             <ScaleIcon className="w-5 h-5 mr-2 text-gray-600" />
-            方法比較：BTC推導 vs 歷史波動率
+            Method Comparison: BTC-derived vs Historical
           </h3>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* BTC推導結果 */}
             <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-              <h4 className="font-medium text-purple-900 mb-3">🚀 BTC隱含波動率推導</h4>
+              <h4 className="font-medium text-purple-900 mb-3">🚀 BTC-derived IV</h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span>折扣率:</span>
+                  <span>Discount:</span>
                   <span className="font-bold text-purple-700">{formatPercentage(callDiscount)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>推導波動率:</span>
+                  <span>Derived volatility:</span>
                   <span className="font-medium">{calculation.impliedVolatility?.toFixed(1)}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Call期權價格:</span>
+                  <span>Call price:</span>
                   <span className="font-medium">{formatCurrency(callTheoretical)}</span>
                 </div>
               </div>
@@ -203,18 +203,18 @@ export default function BetaImpliedVolatilityResults({
             
             {/* 歷史波動率結果 */}
             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <h4 className="font-medium text-gray-900 mb-3">📈 歷史波動率方法</h4>
+              <h4 className="font-medium text-gray-900 mb-3">📈 Historical method</h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span>折扣率:</span>
+                  <span>Discount:</span>
                   <span className="font-bold text-gray-700">{formatPercentage(historicalCalculation.callDiscount || 0)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>歷史波動率:</span>
+                  <span>Historical volatility:</span>
                   <span className="font-medium">{historicalCalculation.impliedVolatility?.toFixed(1)}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Call期權價格:</span>
+                  <span>Call price:</span>
                   <span className="font-medium">{formatCurrency(historicalCalculation.theoreticalCallPrice || 0)}</span>
                 </div>
               </div>
@@ -223,16 +223,16 @@ export default function BetaImpliedVolatilityResults({
           
           {/* 差異分析 */}
           <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <h5 className="font-medium text-yellow-900 mb-2">📊 差異分析</h5>
+            <h5 className="font-medium text-yellow-900 mb-2">📊 Differences</h5>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-yellow-700">折扣率差異:</span>
+                <span className="text-yellow-700">Discount diff:</span>
                 <span className={`ml-2 font-medium ${discountDifference > 0 ? 'text-red-600' : 'text-green-600'}`}>
                   {discountDifference > 0 ? '+' : ''}{discountDifference.toFixed(2)}%
                 </span>
               </div>
               <div>
-                <span className="text-yellow-700">波動率差異:</span>
+                <span className="text-yellow-700">Volatility diff:</span>
                 <span className={`ml-2 font-medium ${volatilityDifference > 0 ? 'text-red-600' : 'text-green-600'}`}>
                   {volatilityDifference > 0 ? '+' : ''}{volatilityDifference.toFixed(1)}%
                 </span>
@@ -242,11 +242,11 @@ export default function BetaImpliedVolatilityResults({
         </div>
       )}
 
-      {/* 詳細分析 */}
+      {/* Detailed analysis */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h3 className="text-lg font-semibold mb-4 flex items-center">
           <ChartBarIcon className="w-5 h-5 mr-2 text-gray-600" />
-          折扣率詳細分析
+          Discount — Detailed Analysis
         </h3>
         
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -254,50 +254,49 @@ export default function BetaImpliedVolatilityResults({
             <div className="text-2xl font-bold text-gray-900 break-words">
               {formatPercentage(callDiscount)}
             </div>
-            <div className="text-sm text-gray-600">Call折扣率</div>
+            <div className="text-sm text-gray-600">Call Discount</div>
           </div>
           
           <div className="text-center p-4 bg-gray-50 rounded-lg">
             <div className="text-2xl font-bold text-gray-900 break-words">
               {formatPercentage(callAnnualizedRate)}
             </div>
-            <div className="text-sm text-gray-600">年化折扣率</div>
+            <div className="text-sm text-gray-600">Annualized Rate</div>
           </div>
           
           <div className="text-center p-4 bg-gray-50 rounded-lg">
             <div className="text-2xl font-bold text-gray-900">
               {formatCurrency(callFairValue)}
             </div>
-            <div className="text-sm text-gray-600">合理購買價格</div>
+            <div className="text-sm text-gray-600">Fair Value</div>
           </div>
           
           <div className="text-center p-4 bg-gray-50 rounded-lg">
             <div className="text-2xl font-bold text-gray-900">
               {formatCurrency(callTheoretical)}
             </div>
-            <div className="text-sm text-gray-600">理論Call價格</div>
-          </div>
+            <div className="text-sm text-gray-600">Theoretical Call Price</div>
+        </div>
         </div>
 
         {/* 投資建議 */}
         <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
-          <h4 className="font-medium text-blue-900 mb-2">💡 BTC隱含波動率推導優勢</h4>
+          <h4 className="font-medium text-blue-900 mb-2">💡 Why BTC-derived IV</h4>
           <p className="text-sm text-blue-800">
-            相比歷史波動率，BTC隱含波動率方法整合了選擇權市場的forward-looking預期，
-            通過Beta係數反映小幣相對BTC的風險倍數({betaAnalysis?.betaAnalysis?.beta?.toFixed(2)}倍)，
-            更能反映當前市場對未來波動的預期。信心水準：
+            Compared to historical IV, BTC-implied IV reflects forward-looking market expectations. Beta scales BTC risk
+            to altcoins ({betaAnalysis?.betaAnalysis?.beta?.toFixed(2)}×). Confidence:
             <span className={`font-medium ml-1 ${
               betaAnalysis?.volatilityComparison?.confidence === 'high' ? 'text-green-700' :
               betaAnalysis?.volatilityComparison?.confidence === 'medium' ? 'text-yellow-700' : 'text-red-700'
             }`}>
-              {betaAnalysis?.volatilityComparison?.confidence === 'high' ? '高' :
-               betaAnalysis?.volatilityComparison?.confidence === 'medium' ? '中' : '低'}
+              {betaAnalysis?.volatilityComparison?.confidence === 'high' ? 'High' :
+               betaAnalysis?.volatilityComparison?.confidence === 'medium' ? 'Medium' : 'Low'}
             </span>
           </p>
         </div>
       </div>
 
-      {/* 計算過程詳情 */}
+      {/* Calculation details */}
       <div className="bg-white rounded-lg border border-gray-200">
         <div className="p-4 border-b border-gray-200">
           <button
@@ -305,10 +304,10 @@ export default function BetaImpliedVolatilityResults({
             className="w-full flex items-center justify-between text-left"
           >
             <h3 className="text-lg font-semibold text-gray-900">
-              🧮 計算過程詳情
+              🧮 Calculation Details
             </h3>
             <span className="text-sm text-gray-500">
-              {showCalculationDetails ? '隱藏詳情' : '顯示詳情'}
+              {showCalculationDetails ? 'Hide details' : 'Show details'}
             </span>
           </button>
         </div>
@@ -317,29 +316,29 @@ export default function BetaImpliedVolatilityResults({
           <div className="p-4 space-y-4">
             {/* BTC隱含波動率推導步驟 */}
             <div>
-              <h4 className="font-medium text-gray-900 mb-3">🔄 BTC隱含波動率推導步驟</h4>
+              <h4 className="font-medium text-gray-900 mb-3">🔄 BTC-IV Derivation Steps</h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between p-3 bg-blue-50 rounded">
-                  <span>1. BTC隱含波動率獲取:</span>
+                  <span>1. Fetch BTC implied volatility:</span>
                   <span className="font-medium">
                     {betaAnalysis?.btcImpliedVolatility?.impliedVolatility?.toFixed(1)}% 
-                    ({betaAnalysis?.btcImpliedVolatility?.source === 'deribit_options' ? 'Deribit' : '預設值'})
+                    ({betaAnalysis?.btcImpliedVolatility?.source === 'deribit_options' ? 'Deribit' : 'Fallback'})
                   </span>
                 </div>
                 <div className="flex justify-between p-3 bg-blue-50 rounded">
-                  <span>2. Beta係數計算:</span>
+                  <span>2. Compute Beta:</span>
                   <span className="font-medium">
-                    {betaAnalysis?.betaAnalysis?.beta?.toFixed(3)} (相關性: {betaAnalysis?.betaAnalysis?.correlation ? (betaAnalysis.betaAnalysis.correlation * 100).toFixed(1) + '%' : 'N/A'})
+                    {betaAnalysis?.betaAnalysis?.beta?.toFixed(3)} (corr: {betaAnalysis?.betaAnalysis?.correlation ? (betaAnalysis.betaAnalysis.correlation * 100).toFixed(1) + '%' : 'N/A'})
                   </span>
                 </div>
                 <div className="flex justify-between p-3 bg-blue-50 rounded">
-                  <span>3. 推導隱含波動率:</span>
+                  <span>3. Derive implied volatility:</span>
                   <span className="font-medium">
                     {betaAnalysis?.btcImpliedVolatility?.impliedVolatility?.toFixed(1)}% × {betaAnalysis?.betaAnalysis?.beta?.toFixed(3)} = {calculation.impliedVolatility?.toFixed(1)}%
                   </span>
                 </div>
                 <div className="flex justify-between p-3 bg-green-50 rounded border border-green-200">
-                  <span className="font-medium">最終折扣率:</span>
+                  <span className="font-medium">Final discount rate:</span>
                   <span className="font-bold text-green-700">{formatPercentage(callDiscount)}</span>
                 </div>
               </div>
@@ -348,19 +347,19 @@ export default function BetaImpliedVolatilityResults({
             {/* Beta係數詳細信息 */}
             {betaAnalysis && (
               <div>
-                <h4 className="font-medium text-gray-900 mb-3">📊 Beta係數計算詳情</h4>
+                <h4 className="font-medium text-gray-900 mb-3">📊 Beta Computation Details</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
                   <div className="flex justify-between p-3 bg-gray-50 rounded">
-                    <span className="text-gray-600">計算公式:</span>
-                    <span className="font-medium">Cov(小幣,BTC)/Var(BTC)</span>
+                    <span className="text-gray-600">Formula:</span>
+                    <span className="font-medium">Cov(Altcoin, BTC) / Var(BTC)</span>
                   </div>
                   <div className="flex justify-between p-3 bg-gray-50 rounded">
-                    <span className="text-gray-600">數據期間:</span>
-                    <span className="font-medium">{betaAnalysis.betaAnalysis?.calculationPeriodDays}天</span>
+                    <span className="text-gray-600">Data window:</span>
+                    <span className="font-medium">{betaAnalysis.betaAnalysis?.calculationPeriodDays} days</span>
                   </div>
                   <div className="flex justify-between p-3 bg-gray-50 rounded">
-                    <span className="text-gray-600">數據點數:</span>
-                    <span className="font-medium">{betaAnalysis.betaAnalysis?.dataPoints}個</span>
+                    <span className="text-gray-600">Data points:</span>
+                    <span className="font-medium">{betaAnalysis.betaAnalysis?.dataPoints}</span>
                   </div>
                 </div>
               </div>

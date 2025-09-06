@@ -92,10 +92,10 @@ export default function Calculator() {
     setCurrentStep(stepId);
   };
 
-  // 自定義代幣計算
+  // Custom token calculation
   const calculateCustomToken = async () => {
     if (!customTokenInput) {
-      alert('請完成代幣參數設定');
+      alert('Please complete token settings');
       return;
     }
     
@@ -107,26 +107,26 @@ export default function Calculator() {
     const volatilityMethod = (customTokenInput as any).volatilityMethod || 'historical';
     
     try {
-      console.log(`[Calculator] 🚀 開始計算自定義代幣: ${customTokenInput.symbol} (方法: ${volatilityMethod})`);
+      console.log(`[Calculator] 🚀 Start custom token calculation: ${customTokenInput.symbol} (method: ${volatilityMethod})`);
       
       if (volatilityMethod === 'btc-implied') {
-        // 使用BTC隱含波動率推導方法
+        // Use BTC-implied volatility derivation
         await calculateWithBtcImpliedVolatility();
       } else {
-        // 使用歷史波動率方法
+        // Use historical volatility method
         await calculateWithHistoricalVolatility();
       }
       
     } catch (error) {
-      console.error('[Calculator] ❌ 自定義代幣計算失敗:', error);
-      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
-      alert(`計算失敗: ${errorMessage}`);
+      console.error('[Calculator] ❌ Custom token calculation failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Calculation failed: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
   };
   
-  // 歷史波動率計算方法
+  // Historical volatility calculation method
   const calculateWithHistoricalVolatility = async () => {
     const volatilityDays = customTokenInput!.volatilityDays || 90;
     const response = await fetch(
@@ -134,18 +134,18 @@ export default function Calculator() {
     );
     
     if (!response.ok) {
-      throw new Error(`API 呼叫失敗: ${response.status}`);
+      throw new Error(`API request failed: ${response.status}`);
     }
     
     const result = await response.json();
     
     if (!result.success) {
-      throw new Error(result.details || result.error || '計算失敗');
+      throw new Error(result.details || result.error || 'Calculation failed');
     }
     
-    console.log(`[Calculator] ✅ 歷史波動率計算完成:`, result.calculation);
+    console.log(`[Calculator] ✅ Historical volatility calculation completed:`, result.calculation);
     
-    // 轉換成與原有 DiscountCalculation 兼容的格式
+    // Convert to DiscountCalculation compatible format
     const customCalculation: DiscountCalculation = {
       annualizedRate: result.calculation.annualizedRate,
       fairValue: result.calculation.fairValue,
@@ -159,37 +159,37 @@ export default function Calculator() {
     };
     
     setCalculation(customCalculation);
-    setCustomTokenApiResult(result); // 保存完整的API結果
+    setCustomTokenApiResult(result); // Save full API result
     
-    // 設定虛擬價格數據以供結果顯示
+    // Set pseudo price data for display
     setPrices({
-      token: 'BTC', // 佔位符
+      token: 'BTC', // placeholder
       spot: result.calculation.currentPrice,
       timestamp: new Date()
     });
   };
   
-  // BTC隱含波動率推導方法
+  // BTC-implied volatility derived method
   const calculateWithBtcImpliedVolatility = async () => {
-    // 首先獲取beta分析結果
+    // Fetch beta analysis first
     const betaResponse = await fetch(
       `/api/beta-analysis?tokenId=${customTokenInput!.symbol}&period=${customTokenInput!.period}`
     );
     
     if (!betaResponse.ok) {
-      throw new Error(`Beta分析失敗: ${betaResponse.status}`);
+      throw new Error(`Beta analysis failed: ${betaResponse.status}`);
     }
     
     const betaResult = await betaResponse.json();
     
     if (!betaResult.success) {
-      throw new Error(betaResult.details || betaResult.error || 'Beta分析失敗');
+      throw new Error(betaResult.details || betaResult.error || 'Beta analysis failed');
     }
     
-    console.log(`[Calculator] ✅ Beta分析完成:`, betaResult);
+    console.log(`[Calculator] ✅ Beta analysis completed:`, betaResult);
     setBetaAnalysisResult(betaResult);
     
-    // 同時獲取歷史波動率結果作為比較
+    // Also fetch historical volatility as comparison
     try {
       const volatilityDays = customTokenInput!.volatilityDays || 90;
       const historicalResponse = await fetch(
@@ -214,7 +214,7 @@ export default function Calculator() {
         }
       }
     } catch (error) {
-      console.warn('[Calculator] ⚠️ 無法獲取歷史波動率比較數據:', error);
+      console.warn('[Calculator] ⚠️ Unable to fetch historical volatility comparison:', error);
     }
     
     // 使用BTC推導的隱含波動率和正確的Black-Scholes公式計算Call價格
@@ -266,10 +266,10 @@ export default function Calculator() {
     setLoading(true);
     setOptionsLoading(true);
     
-    // 初始化計算步驟
+    // Initialize calculation steps
     initializeCalculationSteps();
     
-    // 重置之前的結果
+    // Reset previous results
     setCalculation(null);
     setDualExpiryInfo(null);
     setOptionsData(null);
@@ -281,10 +281,10 @@ export default function Calculator() {
     console.log(`[Calculator] 💰 Using ${period} treasury rate: ${(riskFreeRate * 100).toFixed(2)}%`);
     
     try {
-      // 步驟1: 獲取現貨價格
+      // Step 1: Fetch spot price
       updateCalculationStep('market-data', {
         status: 'processing',
-        description: `正在從 CoinGecko API 獲取 ${token} 現貨價格...`
+        description: `Fetching ${token} spot price from CoinGecko...`
       });
       
       const priceResponse = await fetch(`/api/prices?token=${token}`);
@@ -292,7 +292,7 @@ export default function Calculator() {
       if (!priceResponse.ok) {
         updateCalculationStep('market-data', {
           status: 'error',
-          description: `現貨價格獲取失敗: HTTP ${priceResponse.status}`
+          description: `Failed to fetch spot price: HTTP ${priceResponse.status}`
         });
         throw new Error('Failed to fetch prices');
       }
@@ -302,13 +302,13 @@ export default function Calculator() {
       
       updateCalculationStep('market-data', {
         status: 'completed',
-        description: `✅ ${token} 現貨價格: $${priceData.spot.toLocaleString()}`
+        description: `✅ ${token} spot: $${priceData.spot.toLocaleString('en-US')}`
       });
       
-      // 步驟2: 獲取選擇權數據
+      // Step 2: Fetch options data
       updateCalculationStep('dual-expiry-selection', {
         status: 'processing',
-        description: '正在嘗試雙到期日方差外推法...'
+        description: 'Trying dual-expiry variance extrapolation...'
       });
       
       const optionsResponse = await fetch(
@@ -327,31 +327,31 @@ export default function Calculator() {
           setCalculation(optionsCalc);
           setDualExpiryInfo(dualExpiryInfo);
           
-          // 更新計算步驟
+          // Update calculation steps
           updateCalculationStep('dual-expiry-selection', {
             status: 'completed',
-            description: `✅ 策略: ${dualExpiryInfo?.strategy === 'interpolation' ? '內插法' : 
-                                  dualExpiryInfo?.strategy === 'extrapolation' ? '外推法' : '有界外推法'}`
+            description: `✅ Strategy: ${dualExpiryInfo?.strategy === 'interpolation' ? 'Interpolation' : 
+                                  dualExpiryInfo?.strategy === 'extrapolation' ? 'Extrapolation' : 'Bounded Extrapolation'}`
           });
           
           updateCalculationStep('common-strikes', {
             status: 'completed',
-            description: `✅ 找到 ${optionsChainData?.length || 0} 個合約`
+            description: `✅ Found ${optionsChainData?.length || 0} contracts`
           });
           
           updateCalculationStep('variance-extrapolation', {
             status: 'completed',
-            description: `✅ 外推波動率: ${optionsCalc?.impliedVolatility?.toFixed(1)}%`
+            description: `✅ Extrapolated IV: ${optionsCalc?.impliedVolatility?.toFixed(1)}%`
           });
           
           updateCalculationStep('black-scholes', {
             status: 'completed',
-            description: `✅ Black-Scholes 計算完成`
+            description: `✅ Black-Scholes pricing completed`
           });
           
           updateCalculationStep('discount-calculation', {
             status: 'completed',
-            description: `✅ Call折扣: ${optionsCalc?.callDiscount?.toFixed(2)}%, Put折扣: ${optionsCalc?.putDiscount?.toFixed(2)}%`
+            description: `✅ Call discount: ${optionsCalc?.callDiscount?.toFixed(2)}%, Put discount: ${optionsCalc?.putDiscount?.toFixed(2)}%`
           });
         } else {
           setOptionsData([]);
@@ -362,7 +362,7 @@ export default function Calculator() {
       
     } catch (error) {
       console.error('Error fetching data:', error);
-      alert('獲取數據失敗，請稍後再試');
+      alert('Failed to fetch data. Please try again later.');
     } finally {
       setLoading(false);
       setOptionsLoading(false);
@@ -394,7 +394,7 @@ export default function Calculator() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
         <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
-          鎖倉Token折扣率計算器
+          Locked Token Discount Calculator
         </h1>
         
         {/* Token Mode Selection */}
@@ -402,7 +402,7 @@ export default function Calculator() {
           selectedMode={calculationMode}
           onModeChange={(mode) => {
             setCalculationMode(mode);
-            // 清空之前的結果
+            // Clear previous results
             setCalculation(null);
             setPrices(null);
             setOptionsData(null);
@@ -416,7 +416,7 @@ export default function Calculator() {
             {/* Token Selection */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                選擇幣種
+                Select Token
               </label>
               <div className="flex space-x-4">
                 {(['BTC', 'ETH'] as Token[]).map((t) => (
@@ -438,7 +438,7 @@ export default function Calculator() {
             {/* Period Selection */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                鎖倉期限
+                Lockup Period
               </label>
               <div className="grid grid-cols-4 gap-2">
                 {(['3M', '6M', '1Y', '2Y'] as LockupPeriod[]).map((p) => (
@@ -451,7 +451,7 @@ export default function Calculator() {
                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                     }`}
                   >
-                    {p === '1Y' ? '1年' : p === '2Y' ? '2年' : p}
+                    {p}
                   </button>
                 ))}
               </div>
@@ -478,7 +478,7 @@ export default function Calculator() {
               disabled={loading || optionsLoading}
               className="w-full bg-blue-600 text-white py-3 px-4 rounded-md font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              {loading ? '更新中...' : optionsLoading ? '獲取選擇權數據中...' : '更新價格與數據'}
+              {loading ? 'Updating...' : optionsLoading ? 'Fetching options data...' : 'Update Prices & Data'}
             </button>
           ) : (
             <button
@@ -486,14 +486,14 @@ export default function Calculator() {
               disabled={loading || !customTokenInput}
               className="w-full bg-green-600 text-white py-3 px-4 rounded-md font-medium hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              {loading ? '計算中...' : '計算折扣率'}
+              {loading ? 'Calculating...' : 'Calculate Discount'}
             </button>
           )}
           
           {/* Loading Progress */}
           {(loading || optionsLoading) && (
             <div className="mt-2 p-3 bg-blue-50 rounded-md">
-              <div className="text-sm text-blue-700 font-medium mb-2">正在獲取數據...</div>
+              <div className="text-sm text-blue-700 font-medium mb-2">Fetching data...</div>
               <div className="flex items-center justify-center">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
               </div>
@@ -504,14 +504,14 @@ export default function Calculator() {
         {/* Price Display */}
         {prices && (
           <div className="mb-6 p-4 bg-gray-50 rounded-md">
-            <h3 className="text-lg font-semibold mb-3">市場價格</h3>
+            <h3 className="text-lg font-semibold mb-3">Market Prices</h3>
             <div className="text-sm">
               <div>
-                <span className="text-gray-600">現貨價格:</span>
+                <span className="text-gray-600">Spot Price:</span>
                 <span className="font-medium ml-2">{formatCurrency(prices.spot)}</span>
               </div>
               <div className="text-xs text-gray-500 mt-2">
-                更新時間: {new Date(prices.timestamp).toLocaleString('zh-TW')}
+                Updated: {new Date(prices.timestamp).toLocaleString('en-US')}
               </div>
             </div>
           </div>
@@ -558,7 +558,7 @@ export default function Calculator() {
                   volatilityData={customTokenApiResult?.volatilityAnalysis}
                   treasuryRateData={customTokenApiResult?.blackScholesParameters ? {
                     rate: customTokenApiResult.blackScholesParameters.riskFreeRate / 100, // Convert to decimal
-                    displayText: `${customTokenApiResult.blackScholesParameters.riskFreeRate.toFixed(2)}% (${customTokenInput!.period === '1Y' ? '1年期' : customTokenInput!.period === '2Y' ? '2年期' : customTokenInput!.period === '6M' ? '6個月' : '3個月'}美國國庫券)`,
+                    displayText: `${customTokenApiResult.blackScholesParameters.riskFreeRate.toFixed(2)}% (${customTokenInput!.period}) U.S. Treasury`,
                     source: 'FRED_API',
                     date: new Date().toISOString().split('T')[0]
                   } : undefined}
@@ -572,7 +572,7 @@ export default function Calculator() {
         {calculation === null && optionsData !== null && optionsData.length === 0 && (
           <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
             <p className="text-sm text-yellow-800">
-              暫無可用的選擇權數據。請嘗試其他期限或稍後再試。
+              No options data available. Try another period or later.
             </p>
           </div>
         )}

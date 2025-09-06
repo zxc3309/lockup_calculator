@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    console.log(`[Custom Token API] 🚀 計算 ${tokenId} ${period} 折扣率, 目標價格: $${targetPrice}, 波動率天數: ${volatilityDays}`);
+    console.log(`[Custom Token API] 🚀 Calculating ${tokenId} ${period} discount; target: $${targetPrice}, volatility days: ${volatilityDays}`);
     
     debugLog.push({
       step: 'validation_complete',
@@ -108,14 +108,14 @@ export async function GET(request: NextRequest) {
     });
     
     // Phase 1: Get current price with multi-API support
-    console.log(`[Custom Token API] 📊 Phase 1: 獲取 ${tokenId} 當前價格...`);
+    console.log(`[Custom Token API] 📊 Phase 1: Fetch ${tokenId} current price...`);
     
     const currentPriceStartTime = Date.now();
     const currentPriceResult = await getCurrentPrice(tokenId);
     const currentPrice = currentPriceResult.data;
     const currentPriceDuration = Date.now() - currentPriceStartTime;
     
-    console.log(`[Custom Token API] ✅ 當前價格: $${currentPrice} (來源: ${currentPriceResult.provider.toUpperCase()}${currentPriceResult.cached ? ', 緩存' : ''})`);
+    console.log(`[Custom Token API] ✅ Current price: $${currentPrice} (source: ${currentPriceResult.provider.toUpperCase()}${currentPriceResult.cached ? ', cached' : ''})`);
     
     debugLog.push({
       step: 'current_price_fetched',
@@ -127,14 +127,14 @@ export async function GET(request: NextRequest) {
     });
     
     // Phase 2: Fetch historical data and calculate volatility with multi-API support
-    console.log(`[Custom Token API] 📈 Phase 2: 獲取 ${volatilityDays} 天歷史數據並計算波動率...`);
+    console.log(`[Custom Token API] 📈 Phase 2: Fetch ${volatilityDays} days of history and compute volatility...`);
     
     const historicalStartTime = Date.now();
     const historicalPricesResult = await fetchHistoricalPrices(tokenId, volatilityDays);
     const volatilityResult = calculateHistoricalVolatility(historicalPricesResult.data, historicalPricesResult.provider);
     const historicalDuration = Date.now() - historicalStartTime;
     
-    console.log(`[Custom Token API] ✅ 年化波動率: ${(volatilityResult.annualizedVolatility * 100).toFixed(1)}% (來源: ${historicalPricesResult.provider.toUpperCase()}${historicalPricesResult.cached ? ', 緩存' : ''})`);
+    console.log(`[Custom Token API] ✅ Annualized volatility: ${(volatilityResult.annualizedVolatility * 100).toFixed(1)}% (source: ${historicalPricesResult.provider.toUpperCase()}${historicalPricesResult.cached ? ', cached' : ''})`);
     
     debugLog.push({
       step: 'volatility_calculated',
@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
     });
     
     // Phase 3: Calculate option pricing
-    console.log(`[Custom Token API] 🧮 Phase 3: 計算期權價格...`);
+    console.log(`[Custom Token API] 🧮 Phase 3: Calculate option price...`);
     
     const lockupDays = lockupPeriodToDays(period);
     const timeToExpiry = lockupDays / 365; // Convert to years
@@ -186,10 +186,10 @@ export async function GET(request: NextRequest) {
     
     const calculationDuration = Date.now() - calculationStartTime;
     
-    console.log(`[Custom Token API] ✅ 計算完成!`);
-    console.log(`[Custom Token API] 💰 Call期權價格: $${theoreticalCallPrice.toFixed(4)}`);
-    console.log(`[Custom Token API] 📊 折扣率: ${callDiscountRate.toFixed(2)}%`);
-    console.log(`[Custom Token API] 📈 年化折扣率: ${annualizedRate.toFixed(2)}%`);
+    console.log(`[Custom Token API] ✅ Calculation complete!`);
+    console.log(`[Custom Token API] 💰 Call price: $${theoreticalCallPrice.toFixed(4)}`);
+    console.log(`[Custom Token API] 📊 Discount: ${callDiscountRate.toFixed(2)}%`);
+    console.log(`[Custom Token API] 📈 Annualized rate: ${annualizedRate.toFixed(2)}%`);
     
     debugLog.push({
       step: 'calculation_complete',
@@ -254,7 +254,7 @@ export async function GET(request: NextRequest) {
       ...(debug && { debugLog })
     };
     
-    console.log(`[Custom Token API] 🎉 ${tokenId} 計算完成，耗時 ${totalDuration}ms`);
+    console.log(`[Custom Token API] 🎉 ${tokenId} calculation finished in ${totalDuration}ms`);
     
     return NextResponse.json(response);
     

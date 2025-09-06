@@ -59,7 +59,7 @@ export default function CustomTokenInput({ onInputChange, loading = false }: Cus
         const response = await fetch(`/api/custom-token/price?tokenId=${tokenId}`);
         
         if (!response.ok) {
-          throw new Error('價格獲取失敗');
+          throw new Error('Failed to fetch price');
         }
 
         const result = await response.json();
@@ -67,11 +67,11 @@ export default function CustomTokenInput({ onInputChange, loading = false }: Cus
         if (result.success && result.price) {
           setCurrentPrice(result.price);
         } else {
-          throw new Error(result.error || '找不到該代幣價格');
+          throw new Error(result.error || 'Token price not found');
         }
       } catch (error) {
         console.error('Price fetch error:', error);
-        setPriceError(error instanceof Error ? error.message : '獲取價格時發生錯誤');
+        setPriceError(error instanceof Error ? error.message : 'Error occurred while fetching price');
         setCurrentPrice(null);
       } finally {
         setPriceLoading(false);
@@ -104,14 +104,14 @@ export default function CustomTokenInput({ onInputChange, loading = false }: Cus
       {/* Token Symbol Input */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          代幣符號
+          Token Symbol
         </label>
         <div className="relative">
           <input
             type="text"
             value={symbol}
             onChange={(e) => setSymbol(e.target.value.toLowerCase())}
-            placeholder="例如: btc, eth, sol, ada, dot"
+            placeholder="e.g., btc, eth, sol, ada, dot"
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             disabled={loading}
           />
@@ -125,10 +125,10 @@ export default function CustomTokenInput({ onInputChange, loading = false }: Cus
         {/* Current Price Display */}
         {currentPrice && (
           <div className="mt-2 text-sm text-gray-600">
-            ✅ 當前價格: <span className="font-medium text-green-600">${currentPrice.toLocaleString()}</span>
+            ✅ Current Price: <span className="font-medium text-green-600">${currentPrice.toLocaleString('en-US')}</span>
           </div>
         )}
-        
+
         {priceError && (
           <div className="mt-2 text-sm text-red-600">
             ❌ {priceError}
@@ -136,14 +136,14 @@ export default function CustomTokenInput({ onInputChange, loading = false }: Cus
         )}
         
         <div className="mt-1 text-xs text-gray-500">
-          支援簡化符號: btc, eth, sol, ada, dot, link, uni, ltc, matic, avax
+          Shortcodes supported: btc, eth, sol, ada, dot, link, uni, ltc, matic, avax
         </div>
       </div>
 
       {/* Lockup Period Selection */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          鎖倉期限
+          Lockup Period
         </label>
         <div className="grid grid-cols-4 gap-2">
           {(['3M', '6M', '1Y', '2Y'] as LockupPeriod[]).map((p) => (
@@ -157,7 +157,7 @@ export default function CustomTokenInput({ onInputChange, loading = false }: Cus
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50'
               }`}
             >
-              {p === '1Y' ? '1年' : p === '2Y' ? '2年' : p}
+              {p}
             </button>
           ))}
         </div>
@@ -166,7 +166,7 @@ export default function CustomTokenInput({ onInputChange, loading = false }: Cus
       {/* Volatility Calculation Method */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          波動率計算方法
+          Volatility Method
         </label>
         <div className="space-y-2">
           <label className="flex items-center">
@@ -180,8 +180,8 @@ export default function CustomTokenInput({ onInputChange, loading = false }: Cus
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
             />
             <span className="ml-2 text-sm text-gray-900">
-              📈 歷史波動率
-              <span className="text-gray-500 ml-1">(基於歷史數據計算)</span>
+              📈 Historical Volatility
+              <span className="text-gray-500 ml-1">(based on past data)</span>
             </span>
           </label>
           
@@ -196,17 +196,17 @@ export default function CustomTokenInput({ onInputChange, loading = false }: Cus
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
             />
             <span className="ml-2 text-sm text-gray-900">
-              🚀 BTC隱含波動率推導
-              <span className="text-gray-500 ml-1">(BTC選擇權市場 × Beta係數)</span>
+              🚀 BTC-Implied Volatility (derived)
+              <span className="text-gray-500 ml-1">(BTC options market × Beta)</span>
             </span>
           </label>
         </div>
         
         <div className="mt-2 text-xs text-gray-500">
           {volatilityMethod === 'historical' ? (
-            '💡 基於歷史價格波動計算，反映過去市場行為'
+            '💡 Uses historical price volatility to reflect past behavior'
           ) : (
-            '💡 整合BTC選擇權市場預期，通過Beta係數推導小幣隱含波動率'
+            '💡 Incorporates BTC options market expectations; derives altcoin IV via beta'
           )}
         </div>
         
@@ -214,7 +214,7 @@ export default function CustomTokenInput({ onInputChange, loading = false }: Cus
         {volatilityMethod === 'historical' && (
           <div className="mt-3 pl-6">
             <label className="block text-xs font-medium text-gray-600 mb-2">
-              歷史數據天數
+              Historical Window
             </label>
             <div className="grid grid-cols-3 gap-2">
               {([60, 90, 180] as const).map((days) => (
@@ -228,14 +228,14 @@ export default function CustomTokenInput({ onInputChange, loading = false }: Cus
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50'
                   }`}
                 >
-                  {days}天
+                  {days}d
                 </button>
               ))}
             </div>
             <div className="mt-1.5 text-xs text-gray-500">
-              {volatilityDays === 60 && '較短期間，反映近期市場情緒'}
-              {volatilityDays === 90 && '標準期間，平衡近期與中期趨勢'}
-              {volatilityDays === 180 && '較長期間，更穩定的歷史趨勢'}
+              {volatilityDays === 60 && 'Shorter window—more reactive to recent moves'}
+              {volatilityDays === 90 && 'Standard window—balances short/mid-term trends'}
+              {volatilityDays === 180 && 'Longer window—smoother historical trend'}
             </div>
           </div>
         )}
@@ -244,7 +244,7 @@ export default function CustomTokenInput({ onInputChange, loading = false }: Cus
       {/* Target Price Input */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          目標價格預期
+          Target Price Expectation
         </label>
         <div className="relative">
           <span className="absolute left-3 top-2 text-gray-500">$</span>
@@ -252,7 +252,7 @@ export default function CustomTokenInput({ onInputChange, loading = false }: Cus
             type="number"
             value={targetPrice}
             onChange={(e) => setTargetPrice(e.target.value)}
-            placeholder="您認為鎖倉期結束時的合理價格"
+            placeholder="Your expected fair price at unlock"
             className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             disabled={loading}
             step="0.01"
@@ -264,7 +264,7 @@ export default function CustomTokenInput({ onInputChange, loading = false }: Cus
         {currentPrice && targetPriceNum && multiplier && (
           <div className="mt-2 space-y-1">
             <div className="text-sm">
-              <span className="text-gray-600">目標倍數: </span>
+              <span className="text-gray-600">Target multiple: </span>
               <span className={`font-medium ${
                 multiplier >= 2 ? 'text-green-600' : 
                 multiplier >= 1.5 ? 'text-blue-600' : 
@@ -278,13 +278,13 @@ export default function CustomTokenInput({ onInputChange, loading = false }: Cus
             </div>
             
             <div className="text-xs text-gray-500">
-              💡 倍數越高，反映的折扣率越低（看好程度越強）
+              💡 Higher multiple → lower discount (stronger bullish view)
             </div>
           </div>
         )}
         
         <div className="mt-1 text-xs text-gray-500">
-          基於您對該代幣長期價值的判斷
+          Based on your long-term view of the token
         </div>
       </div>
 
@@ -299,7 +299,7 @@ export default function CustomTokenInput({ onInputChange, loading = false }: Cus
             </div>
             <div className="ml-3">
               <p className="text-sm text-green-800">
-                ✅ 參數設定完成，可以開始計算折扣率
+                ✅ Ready. You can calculate the discount now.
               </p>
             </div>
           </div>

@@ -19,13 +19,13 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    console.log(`[Price API] 🚀 獲取 ${tokenId} 當前價格...`);
+    console.log(`[Price API] 🚀 Fetching current price for ${tokenId}...`);
     
     // Get current price using multi-API approach
     const priceResult = await getCurrentPrice(tokenId);
     const duration = Date.now() - startTime;
     
-    console.log(`[Price API] ✅ ${tokenId} 價格: $${priceResult.data.toLocaleString()} (來源: ${priceResult.provider.toUpperCase()}${priceResult.cached ? ', 緩存' : ''}, 耗時: ${duration}ms)`);
+    console.log(`[Price API] ✅ ${tokenId} price: $${priceResult.data.toLocaleString()} (source: ${priceResult.provider.toUpperCase()}${priceResult.cached ? ', cached' : ''}, in ${duration}ms)`);
     
     return NextResponse.json({
       success: true,

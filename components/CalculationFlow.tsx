@@ -58,14 +58,14 @@ const StepDetail = ({ step }: { step: CalculationStep }) => {
         <div className="px-4 pb-4 border-t border-gray-100">
           {step.formula && (
             <div className="mt-3 p-3 bg-blue-50 rounded-md">
-              <h4 className="text-sm font-medium text-blue-900 mb-2">計算公式</h4>
+              <h4 className="text-sm font-medium text-blue-900 mb-2">Formula</h4>
               <code className="text-sm text-blue-800 font-mono">{step.formula}</code>
             </div>
           )}
 
           {step.input && (
             <div className="mt-3">
-              <h4 className="text-sm font-medium text-gray-900 mb-2">輸入參數</h4>
+              <h4 className="text-sm font-medium text-gray-900 mb-2">Inputs</h4>
               <div className="bg-gray-50 p-3 rounded-md">
                 <pre className="text-xs text-gray-700 whitespace-pre-wrap">
                   {JSON.stringify(step.input, null, 2)}
@@ -76,7 +76,7 @@ const StepDetail = ({ step }: { step: CalculationStep }) => {
 
           {step.output && (
             <div className="mt-3">
-              <h4 className="text-sm font-medium text-gray-900 mb-2">計算結果</h4>
+              <h4 className="text-sm font-medium text-gray-900 mb-2">Output</h4>
               <div className="bg-green-50 p-3 rounded-md">
                 <pre className="text-xs text-gray-700 whitespace-pre-wrap">
                   {typeof step.output === 'object' 
@@ -90,7 +90,7 @@ const StepDetail = ({ step }: { step: CalculationStep }) => {
 
           {step.errorMessage && (
             <div className="mt-3">
-              <h4 className="text-sm font-medium text-red-900 mb-2">錯誤信息</h4>
+              <h4 className="text-sm font-medium text-red-900 mb-2">Error</h4>
               <div className="bg-red-50 p-3 rounded-md">
                 <p className="text-xs text-red-700">{step.errorMessage}</p>
               </div>
@@ -99,7 +99,7 @@ const StepDetail = ({ step }: { step: CalculationStep }) => {
 
           {step.timestamp && (
             <div className="mt-3 text-xs text-gray-500">
-              執行時間: {step.timestamp.toLocaleString('zh-TW')}
+              Executed at: {step.timestamp.toLocaleString('en-US')}
             </div>
           )}
 
@@ -125,13 +125,13 @@ export default function CalculationFlow({
     <div className="bg-white rounded-lg shadow-lg border border-gray-200">
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-gray-900">🧮 計算流程</h2>
+          <h2 className="text-lg font-semibold text-gray-900">🧮 Calculation Flow</h2>
           {onToggle && (
             <button
               onClick={onToggle}
               className="text-sm text-gray-600 hover:text-gray-800 transition-colors"
             >
-              收起
+              Collapse
             </button>
           )}
         </div>
@@ -144,7 +144,7 @@ export default function CalculationFlow({
         </div>
         
         <div className="text-sm text-gray-600">
-          進度: {completedSteps}/{totalSteps} 步驟完成 ({progressPercentage.toFixed(0)}%)
+          Progress: {completedSteps}/{totalSteps} steps ({progressPercentage.toFixed(0)}%)
         </div>
       </div>
 
@@ -152,7 +152,7 @@ export default function CalculationFlow({
         {steps.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <ClockIcon className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-            <p>暫無計算步驟</p>
+            <p>No steps yet</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -170,47 +170,47 @@ export default function CalculationFlow({
 export const CALCULATION_STEPS_TEMPLATE = {
   MARKET_DATA: {
     id: 'market-data',
-    name: '📊 市場數據獲取',
-    description: '從CoinGecko獲取現貨價格，從Deribit獲取期權鏈數據',
+    name: '📊 Market Data Fetch',
+    description: 'Fetch spot price from CoinGecko and options chain from Deribit',
     status: 'pending' as const
   },
   
   DUAL_EXPIRY_SELECTION: {
     id: 'dual-expiry-selection',
-    name: '🎯 雙到期日智能選擇',
-    description: '分析可用期權到期日，選擇最適合的兩個到期日',
+    name: '🎯 Dual-Expiry Selection',
+    description: 'Analyze available expiries and pick the best two',
     status: 'pending' as const,
     formula: 'Strategy = f(target_date, available_expiries)'
   },
   
   COMMON_STRIKES: {
     id: 'common-strikes',
-    name: '⚖️ 共同ATM執行價格篩選',
-    description: '找到兩個到期日的共同執行價格，選擇前5個最接近ATM的合約',
+    name: '⚖️ Common ATM Strikes',
+    description: 'Find common strikes across expiries; pick top 5 nearest ATM',
     status: 'pending' as const,
     formula: 'ATM_distance = |Strike - Spot_Price|'
   },
   
   VARIANCE_EXTRAPOLATION: {
     id: 'variance-extrapolation',
-    name: '📈 方差線性外推',
-    description: '使用兩個到期日的隱含波動率進行方差線性外推到目標期限',
+    name: '📈 Variance Extrapolation',
+    description: 'Linearly extrapolate variance between two expiries to target',
     status: 'pending' as const,
     formula: 'σ_target = √(Var_target / T_target)'
   },
   
   BLACK_SCHOLES: {
     id: 'black-scholes',
-    name: '🧮 Black-Scholes理論定價',
-    description: '使用外推波動率計算每個執行價格的理論Call/Put價格',
+    name: '🧮 Black-Scholes Pricing',
+    description: 'Use extrapolated IV to price theoretical Call/Put across strikes',
     status: 'pending' as const,
     formula: 'Call = S×N(d1) - K×e^(-r×T)×N(d2)'
   },
   
   DISCOUNT_CALCULATION: {
     id: 'discount-calculation',
-    name: '💰 折扣率計算',
-    description: '計算Call/Put折扣率並進行流動性加權平均',
+    name: '💰 Discount Calculation',
+    description: 'Compute Call/Put discounts and liquidity-weighted averages',
     status: 'pending' as const,
     formula: 'Discount = (Theoretical_Price / Spot_Price) × 100%'
   }
